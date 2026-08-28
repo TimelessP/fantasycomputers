@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RETRO-8 // Fantasy Mechanical Computer</title>
+  <style>
+    :root {
+      --panel-bg: #1c1d21;
+      --bezel-bg: #2d3037;
+      --faceplate: #151619;
+      --gold: #d4af37;
+      --led-off: #200d0d;
+      --led-red: #ff2a2a;
+      --led-green-off: #0b200b;
+      --led-green: #2aff45;
+      --led-amber-off: #20180b;
+      --led-amber: #ffaa00;
+      --switch-metal: linear-gradient(135deg, #e6e6e6 0%, #888888 50%, #444444 100%);
+
+      /* Vintage Paper Palette */
+      --paper-bg: #f4ebd0;
+      --paper-border: #c8b998;
+      --paper-text: #2b261f;
+      --paper-ink-red: #8b0000;
+      --paper-accent: #5c4d3c;
+    }
+
+    * { box-sizing: border-box; user-select: none; margin: 0; padding: 0; }
+    
+    /* --- CUSTOM RETRO SCROLLBARS --- */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0d0e11;
+      border: 1px solid #22252d;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #444855 0%, #282b34 100%);
+      border: 1px solid #5a5f70;
+      border-radius: 2px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, #595e6f 0%, #353945 100%);
+    }
+
+    body {
+      background-color: #0c0d0f;
+      font-family: 'Courier New', Courier, monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: #c5c6c7;
+    }
+
+    /* Computer Chassis */
+    .chassis {
+      width: 920px;
+      background: linear-gradient(145deg, #2b2e36, #18191c);
+      border: 4px solid #3d414d;
+      border-radius: 12px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.1);
+      padding: 30px;
+      position: relative;
+    }
+
+    /* Faceplate Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #3a3d47;
+      padding-bottom: 15px;
+      margin-bottom: 25px;
+    }
+    .brand {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+    .brand h1 {
+      font-size: 28px;
+      letter-spacing: 4px;
+      color: #e5e6e8;
+      text-shadow: 0 0 10px rgba(255,255,255,0.1);
+    }
+    .brand span {
+      font-size: 12px;
+      color: #7f8491;
+      letter-spacing: 1px;
+    }
+
+    /* Header Control Section */
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 25px;
+    }
+    .power-section {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .power-label {
+      font-size: 11px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      color: #8c92a4;
+    }
+    .rocker-switch {
+      width: 44px;
+      height: 70px;
+      background: #111;
+      border-radius: 6px;
+      padding: 4px;
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.8), 0 2px 4px rgba(255,255,255,0.05);
+      cursor: pointer;
+    }
+    .rocker-btn {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to bottom, #441111 0%, #991111 50%, #660000 100%);
+      border-radius: 4px;
+      border: 1px solid #771111;
+      box-shadow: inset 0 -4px 6px rgba(0,0,0,0.6);
+      transition: all 0.15s ease;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #ff9999;
+      font-size: 10px;
+      font-weight: bold;
+    }
+    .rocker-switch.on .rocker-btn {
+      background: linear-gradient(to bottom, #bb1111 0%, #ff3333 50%, #990000 100%);
+      box-shadow: inset 0 4px 6px rgba(255,255,255,0.4), 0 0 12px rgba(255, 0, 0, 0.5);
+      color: #fff;
+    }
+
+    /* Main Console Grid */
+    .console-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 25px;
+      margin-bottom: 25px;
+    }
+    .panel-box {
+      background: #121316;
+      border: 2px solid #282a30;
+      border-radius: 8px;
+      padding: 18px;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.6);
+    }
+    .panel-title {
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: #7f8491;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      border-bottom: 1px dotted #282a30;
+      padding-bottom: 6px;
+    }
+
+    /* LED Rendering */
+    .led-bank {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 10px 0;
+    }
+    .led-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .led-bit-label {
+      font-size: 10px;
+      color: #5a5e6b;
+      font-weight: bold;
+    }
+    .led {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background-color: var(--led-off);
+      border: 2px solid #111;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.8);
+      transition: background-color 0.1s, box-shadow 0.1s;
+    }
+    .led.red.active {
+      background-color: var(--led-red);
+      box-shadow: 0 0 12px var(--led-red), inset 0 -2px 4px rgba(255,255,255,0.6);
+    }
+    .led.green.active {
+      background-color: var(--led-green);
+      box-shadow: 0 0 12px var(--led-green), inset 0 -2px 4px rgba(255,255,255,0.6);
+    }
+    .led.amber.active {
+      background-color: var(--led-amber);
+      box-shadow: 0 0 12px var(--led-amber), inset 0 -2px 4px rgba(255,255,255,0.6);
+    }
+
+    /* Mechanical Toggle Switches */
+    .switch-bank {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 10px 0;
+    }
+    .toggle-unit {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+    .toggle-slot {
+      width: 24px;
+      height: 54px;
+      background: linear-gradient(to bottom, #0a0a0c, #22242a);
+      border-radius: 12px;
+      border: 2px solid #333640;
+      position: relative;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.9);
+      display: flex;
+      justify-content: center;
+    }
+    .toggle-baton {
+      width: 14px;
+      height: 28px;
+      background: var(--switch-metal);
+      border-radius: 7px;
+      position: absolute;
+      top: 20px; /* UP position (OFF bit 0) */
+      box-shadow: 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 2px rgba(255,255,255,0.8);
+      transition: top 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .toggle-unit.on .toggle-baton {
+      top: 4px; /* DOWN position (ON bit 1) */
+      box-shadow: 0 -2px 6px rgba(0,0,0,0.6), inset 0 2px 2px rgba(255,255,255,0.8);
+    }
+
+    /* Control Buttons */
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 15px;
+    }
+    .push-btn {
+      flex: 1;
+      padding: 12px;
+      background: linear-gradient(to bottom, #3a3d47, #22242b);
+      border: 1px solid #4f5463;
+      border-radius: 5px;
+      color: #d1d5db;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      cursor: pointer;
+      box-shadow: 0 3px 0 #15161a, 0 4px 6px rgba(0,0,0,0.4);
+      transition: all 0.05s ease;
+    }
+    .push-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 0 0 #15161a, inset 0 2px 4px rgba(0,0,0,0.6);
+    }
+    .push-btn.action {
+      background: linear-gradient(to bottom, #aa6600, #663300);
+      border-color: #cc8822;
+      color: #fff;
+    }
+    .push-btn.manual-trigger {
+      background: linear-gradient(to bottom, #2b4560, #17283c);
+      border-color: #436993;
+      color: #bcd6f5;
+      padding: 10px 16px;
+    }
+
+    /* Program Examples Section */
+    .examples-panel {
+      background: #121316;
+      border: 2px solid #282a30;
+      border-radius: 8px;
+      padding: 18px;
+    }
+    .example-buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .ex-btn {
+      padding: 8px;
+      background: #1c1e24;
+      border: 1px solid #343844;
+      border-radius: 4px;
+      color: #9da3b4;
+      font-family: inherit;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .ex-btn:hover {
+      background: #282c36;
+      color: #fff;
+      border-color: #525866;
+    }
+
+    /* Terminal Monitor Display */
+    .monitor {
+      margin-top: 20px;
+      background: #050a05;
+      border: 3px solid #1a261a;
+      border-radius: 6px;
+      padding: 12px;
+      height: 90px;
+      font-size: 12px;
+      color: #33ff33;
+      text-shadow: 0 0 4px rgba(51, 255, 51, 0.6);
+      overflow-y: auto;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.9);
+    }
+
+    /* --- VINTAGE REFERENCE MANUAL MODAL --- */
+    .manual-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(4px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .manual-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .manual-book {
+      width: 820px;
+      max-height: 88vh;
+      background-color: var(--paper-bg);
+      color: var(--paper-text);
+      border: 10px solid var(--paper-accent);
+      outline: 2px solid #1a1612;
+      border-radius: 4px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.95), inset 0 0 80px rgba(180, 150, 100, 0.3);
+      padding: 35px 45px;
+      overflow-y: auto;
+      position: relative;
+      font-family: 'Courier New', Courier, monospace;
+    }
+
+    /* Vintage Paper Scrollbars */
+    .manual-book::-webkit-scrollbar {
+      width: 12px;
+    }
+    .manual-book::-webkit-scrollbar-track {
+      background: #dcd1b3;
+      border-left: 1px solid #b8ab8b;
+    }
+    .manual-book::-webkit-scrollbar-thumb {
+      background: #8c765c;
+      border-radius: 2px;
+      border: 2px solid #dcd1b3;
+    }
+    .manual-book::-webkit-scrollbar-thumb:hover {
+      background: #6a5742;
+    }
+
+    /* Decorative Brass Rivets */
+    .rivet {
+      width: 14px;
+      height: 14px;
+      background: radial-gradient(circle at 30% 30%, #e6ca65, #795d19);
+      border-radius: 50%;
+      position: absolute;
+      box-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+    }
+    .rivet.top-left { top: 12px; left: 12px; }
+    .rivet.top-right { top: 12px; right: 12px; }
+    .rivet.bottom-left { bottom: 12px; left: 12px; }
+    .rivet.bottom-right { bottom: 12px; right: 12px; }
+
+    .manual-header {
+      border-bottom: 3px double var(--paper-accent);
+      padding-bottom: 15px;
+      margin-bottom: 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .manual-title-block h2 {
+      font-size: 24px;
+      letter-spacing: 2px;
+      color: var(--paper-ink-red);
+      text-transform: uppercase;
+    }
+    .manual-title-block p {
+      font-size: 11px;
+      color: var(--paper-accent);
+      font-weight: bold;
+      margin-top: 4px;
+    }
+    .close-manual-btn {
+      background: var(--paper-accent);
+      color: var(--paper-bg);
+      border: none;
+      padding: 8px 16px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    .close-manual-btn:hover {
+      background: var(--paper-ink-red);
+    }
+
+    .manual-section {
+      margin-bottom: 30px;
+    }
+    .manual-section h3 {
+      font-size: 15px;
+      color: var(--paper-accent);
+      border-bottom: 1px dashed var(--paper-accent);
+      padding-bottom: 4px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .manual-section p, .manual-section ul {
+      font-size: 12px;
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+    .manual-section ul {
+      list-style-type: square;
+      padding-left: 20px;
+    }
+
+    /* Manual Reference Table */
+    .doc-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+      font-size: 11px;
+    }
+    .doc-table th, .doc-table td {
+      border: 1px solid var(--paper-border);
+      padding: 8px 10px;
+      text-align: left;
+    }
+    .doc-table th {
+      background-color: rgba(92, 77, 60, 0.15);
+      color: var(--paper-accent);
+      font-weight: bold;
+    }
+    .doc-table tr:nth-child(even) {
+      background-color: rgba(0,0,0,0.02);
+    }
+    .code-tag {
+      font-weight: bold;
+      color: var(--paper-ink-red);
+    }
+  </style>
+</head>
+<body>
+
+<div class="chassis">
+  <!-- Top Faceplate Header -->
+  <div class="header">
+    <div class="brand">
+      <h1>RETRO-8</h1>
+      <span>8-BIT FANTASY COMPUTER</span>
+    </div>
+    
+    <div class="header-controls">
+      <button class="push-btn manual-trigger" onclick="toggleManual(true)">📖 MANUAL</button>
+      <div class="power-section">
+        <div class="power-label">POWER</div>
+        <div class="rocker-switch" id="powerSwitch" onclick="togglePower()">
+          <div class="rocker-btn">I/O</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Computer Panels Grid -->
+  <div class="console-grid">
+    
+    <!-- LEFT PANEL: Displays & Execution controls -->
+    <div class="left-col" style="display:flex; flex-direction:column; gap:25px;">
+      
+      <!-- Registers Display -->
+      <div class="panel-box">
+        <div class="panel-title">System Registers (LED Display)</div>
+        
+        <div style="font-size: 9px; color:#5a5e6b; margin-bottom: 4px;">ACCUMULATOR (REG A)</div>
+        <div class="led-bank" id="led-regA"></div>
+
+        <div style="font-size: 9px; color:#5a5e6b; margin-top: 10px; margin-bottom: 4px;">PROGRAM COUNTER (PC)</div>
+        <div class="led-bank" id="led-pc"></div>
+
+        <div style="font-size: 9px; color:#5a5e6b; margin-top: 10px; margin-bottom: 4px;">STATUS FLAGS (Z = Zero, C = Carry)</div>
+        <div class="led-bank" style="justify-content: flex-start; gap: 30px; padding-left: 10px;">
+          <div class="led-wrapper"><div class="led amber" id="flag-z"></div><div class="led-bit-label">Z</div></div>
+          <div class="led-wrapper"><div class="led amber" id="flag-c"></div><div class="led-bit-label">C</div></div>
+        </div>
+      </div>
+
+      <!-- Execution Controls -->
+      <div class="panel-box">
+        <div class="panel-title">Execution Controls</div>
+        <div class="btn-row">
+          <button class="push-btn action" onclick="step()">STEP</button>
+          <button class="push-btn action" id="runBtn" onclick="toggleRun()">RUN / STOP</button>
+          <button class="push-btn" onclick="resetCPU()">RESET PC</button>
+          <button class="push-btn" onclick="clearMemory()">CLEAR RAM</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT PANEL: Mechanical Switch Inputs -->
+    <div class="panel-box">
+      <div class="panel-title">Switch Interface (Address & Data Entry)</div>
+      
+      <div style="font-size: 10px; color:#8c92a4; margin-bottom: 6px;">ADDRESS SWITCHES (0x00 - 0x0F)</div>
+      <div class="switch-bank" id="switches-addr"></div>
+
+      <div style="font-size: 10px; color:#8c92a4; margin-top: 15px; margin-bottom: 6px;">DATA / INSTRUCTION SWITCHES (8-BIT)</div>
+      <div class="switch-bank" id="switches-data"></div>
+
+      <div class="btn-row" style="margin-top:25px;">
+        <button class="push-btn" onclick="depositData()">DEPOSIT IN RAM</button>
+        <button class="push-btn" onclick="examineData()">EXAMINE RAM</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Examples Panel -->
+  <div class="examples-panel">
+    <div class="panel-title">Load Sample Programs into RAM</div>
+    <div class="example-buttons">
+      <button class="ex-btn" onclick="loadProgram('logic')">1. Boolean Logic</button>
+      <button class="ex-btn" onclick="loadProgram('math')">2. Math (Add/Sub)</button>
+      <button class="ex-btn" onclick="loadProgram('state')">3. State Check</button>
+      <button class="ex-btn" onclick="loadProgram('loop')">4. Flow Control (Loop)</button>
+    </div>
+  </div>
+
+  <!-- Monitor Screen -->
+  <div class="monitor" id="monitor">RETRO-8 SYSTEM READY. POWER IS OFF.</div>
+</div>
+
+<!-- VINTAGE REFERENCE MANUAL OVERLAY -->
+<div class="manual-overlay" id="manualOverlay">
+  <div class="manual-book">
+    <div class="rivet top-left"></div>
+    <div class="rivet top-right"></div>
+    <div class="rivet bottom-left"></div>
+    <div class="rivet bottom-right"></div>
+
+    <div class="manual-header">
+      <div class="manual-title-block">
+        <h2>RETRO-8 Reference Manual</h2>
+        <p>SYSTEM OPERATION & INSTRUCTION SET SPECIFICATION // DOC-84-REV2</p>
+      </div>
+      <button class="close-manual-btn" onclick="toggleManual(false)">[X] CLOSE MANUAL</button>
+    </div>
+
+    <div class="manual-section">
+      <h3>1. System Architecture & Hardware Overview</h3>
+      <p>The RETRO-8 is an 8-bit fantasy processor architecture featuring a 4-bit Address Bus, an 8-bit Data Bus, and direct LED visual diagnostics.</p>
+      <ul>
+        <li><strong>Main Accumulator (Reg A):</strong> 8-bit register holding computation results. Output on the red LED array.</li>
+        <li><strong>Program Counter (PC):</strong> 4-bit register tracking execution location in memory (0x0 to 0xF). Output on green LEDs.</li>
+        <li><strong>Status Flags:</strong> Amber LEDs indicate CPU status:
+          <ul>
+            <li><strong>Z (Zero Flag):</strong> Set when an operation yields <code>0x00</code>.</li>
+            <li><strong>C (Carry/Borrow Flag):</strong> Set when addition exceeds <code>255</code> (overflow) or subtraction drops below <code>0</code> (underflow).</li>
+          </ul>
+        </li>
+        <li><strong>RAM:</strong> 16 Bytes of addressable internal storage (0x0 through 0xF).</li>
+      </ul>
+    </div>
+
+    <div class="manual-section">
+      <h3>2. Operating Workflows (Step-by-Step)</h3>
+      
+      <p><strong>Workflow A: Powering On the System</strong></p>
+      <ul>
+        <li>Click the red <strong>POWER I/O</strong> rocker switch in the top right.</li>
+        <li>Ensure system boot diagnostics output <em>"SYSTEM POWERED ON. READY."</em> on the green CRT monitor.</li>
+      </ul>
+
+      <p><strong>Workflow B: Manual Instruction Programming (Physical Switches)</strong></p>
+      <ul>
+        <li>Set the <strong>ADDRESS SWITCHES</strong> (4-bit array, <code>A3-A0</code>) to select target RAM cell (e.g., <code>0000</code> for Address 0x0).</li>
+        <li>Set the <strong>DATA / INSTRUCTION SWITCHES</strong> (8-bit array, <code>D7-D0</code>) to the byte opcode you wish to program.</li>
+        <li>Click <strong>DEPOSIT IN RAM</strong>. The terminal will log confirmation of entry.</li>
+        <li>Advance the address switches to the next memory address and repeat.</li>
+      </ul>
+
+      <p><strong>Workflow C: Inspecting Memory Contents</strong></p>
+      <ul>
+        <li>Toggle the address switches to desired target location.</li>
+        <li>Click <strong>EXAMINE RAM</strong>. The contents stored in that RAM address will print to the CRT log.</li>
+      </ul>
+
+      <p><strong>Workflow D: Executing & Controlling Programs</strong></p>
+      <ul>
+        <li>Click <strong>STEP</strong> to execute a single instruction at current Program Counter (PC).</li>
+        <li>Click <strong>RUN / STOP</strong> to start automatic CPU clock ticking at ~2.5 Hz. Click again to freeze execution.</li>
+        <li>Click <strong>RESET PC</strong> to set Program Counter back to address <code>0x0</code> without wiping RAM.</li>
+        <li>Click <strong>CLEAR RAM</strong> to clear memory and reset registers.</li>
+      </ul>
+    </div>
+
+    <div class="manual-section">
+      <h3>3. Instruction Set Architecture (ISA)</h3>
+      <p>Instructions are 8-bit words structured as: <code>[4-bit Opcode] [4-bit Operand/Immediate Value]</code>.</p>
+      
+      <table class="doc-table">
+        <thead>
+          <tr>
+            <th>Opcode</th>
+            <th>Mnemonic</th>
+            <th>Hex Example</th>
+            <th>Operation & Effect</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="code-tag">0x0_</span></td>
+            <td>NOP</td>
+            <td><code>0x00</code></td>
+            <td>No Operation. Passes clock cycle cleanly.</td>
+          </tr>
+          <tr>
+            <td><span class="code-tag">0x1X</span></td>
+            <td>LDA imm</td>
+            <td><code>0x15</code></td>
+            <td>Load Immediate <code>X</code> into Register A. Sets Zero flag if X=0.</td>
+          </tr>
+          <tr>
+            <td><span class="code-tag">0x2X</span></td>
+            <td>ADD imm</td>
+            <td><code>0x24</code></td>
+            <td>Add Immediate <code>X</code> to Reg A. Sets Carry flag on overflow (&gt;255).</td>
+          </tr>
+          <tr>
+            <td><span class="code-tag">0x3X</span></td>
+            <td>SUB imm</td>
+            <td><code>0x32</code></td>
+            <td>Subtract Immediate <code>X</code> from Reg A. Sets Carry flag on underflow (&lt;0).</td>
+          </tr>
+          <tr>
+            <td><span class="code-tag">0x4X</span></td>
+            <td>AND imm</td>
+            <td><code>0x43</code></td>
+            <td>Bitwise AND Reg A with <code>X</code>. Updates Zero Flag.</td>
+          </tr>
+          <tr>
+            <td><span class="code-tag">0x5X</span></td>
+            <td>OR imm</td>
+            <td><code>0x5F</code></td>
+            <td>Bitwise OR Reg A with <code>X</code>. Updates Zero Flag.</td>
+          </tr>
+          <tr>
+            <td><span class="code-tag">0x6X</span></td>
+            <td>XOR imm</td>
+            <td><code>0x6A</code></td>
+            <td>Bitwise XOR Reg A with <code>X</code>. Updates Zero Flag.</td>
+          </tr>
+          <tr>
+            <td><span class="code-tag">0x70</span></td>
+            <td>NOT</td>
+            <td><code>0x70</code></td>
+            <td>Bitwise invert all bits in Reg A. Updates Zero Flag.</td>
+          </tr>
+          <tr>
+            <td><span class="code-tag">0x8X</span></td>
+            <td>JMP addr</td>
+            <td><code>0x80</code></td>
+            <td>Unconditional jump: set Program Counter (PC) directly to target address <code>X</code>.</td>
+          </tr>
+          <tr>
+            <td><span class="code-tag">0x9X</span></td>
+            <td>JZ addr</td>
+            <td><code>0x94</code></td>
+            <td>Conditional jump: sets PC to address <code>X</code> ONLY IF Zero Flag (Z) is set.</td>
+          </tr>
+          <tr>
+            <td><span class="code-tag">0xF0</span></td>
+            <td>HALT</td>
+            <td><code>0xF0</code></td>
+            <td>Stop program execution clock. Prints execution complete message.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="manual-section">
+      <h3>4. Example Programs & Walkthroughs</h3>
+
+      <p><strong>Example 1: Boolean Logic & Bit Inversion</strong></p>
+      <p>Calculates <code>(5 AND 3) XOR 15</code>.</p>
+      <ul>
+        <li><code>[0x0] 0x15</code> : Load 5 into Reg A (Reg A = 00000101)</li>
+        <li><code>[0x1] 0x43</code> : AND with 3 (Reg A becomes 00000001)</li>
+        <li><code>[0x2] 0x6F</code> : XOR with 15 (Reg A becomes 00001110 / 0x0E)</li>
+        <li><code>[0x3] 0xF0</code> : HALT</li>
+      </ul>
+
+      <p><strong>Example 2: Arithmetic with Carry/Zero Flag Checking</strong></p>
+      <p>Calculates <code>4 + 7 - 2</code>.</p>
+      <ul>
+        <li><code>[0x0] 0x14</code> : Load 4 into Reg A</li>
+        <li><code>[0x1] 0x27</code> : Add 7 (Reg A = 11 / 0x0B)</li>
+        <li><code>[0x2] 0x32</code> : Subtract 2 (Reg A = 9 / 0x09)</li>
+        <li><code>[0x3] 0xF0</code> : HALT</li>
+      </ul>
+
+      <p><strong>Example 3: Conditional Branching & Loops</strong></p>
+      <p>An infinite binary counter incrementing by 1 in address zero.</p>
+      <ul>
+        <li><code>[0x0] 0x21</code> : ADD 1 to Reg A</li>
+        <li><code>[0x1] 0x80</code> : JMP back to address 0x0</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* --- COMPUTER ARCHITECTURE STATE --- */
+  let poweredOn = false;
+  let isRunning = false;
+  let runInterval = null;
+
+  let RAM = new Uint8Array(16); // 16 bytes memory address space (0x0 to 0xF)
+  let regA = 0x00;              // 8-bit Accumulator Register
+  let PC = 0x00;                // 4-bit Program Counter (0-15)
+  let flagZ = false;            // Zero Flag
+  let flagC = false;            // Carry Flag
+
+  // Mechanical Switch States
+  let addrSwitches = 0; // 4-bit integer
+  let dataSwitches = 0; // 8-bit integer
+
+  // Web Audio Click Synthesizer
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  function playClickSound() {
+    if (!poweredOn) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.03);
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.03);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.03);
+  }
+
+  // UI Initializer
+  function initUI() {
+    // Generate Address Switches (4-bit)
+    const addrContainer = document.getElementById('switches-addr');
+    addrContainer.innerHTML = '';
+    for(let i=3; i>=0; i--) {
+      addrContainer.appendChild(createSwitchNode('addr', i));
+    }
+
+    // Generate Data Switches (8-bit)
+    const dataContainer = document.getElementById('switches-data');
+    dataContainer.innerHTML = '';
+    for(let i=7; i>=0; i--) {
+      dataContainer.appendChild(createSwitchNode('data', i));
+    }
+
+    // Generate Register LED Displays
+    createLEDBank('led-regA', 8, 'red');
+    createLEDBank('led-pc', 4, 'green');
+
+    renderAll();
+  }
+
+  function createSwitchNode(type, bit) {
+    const unit = document.createElement('div');
+    unit.className = 'toggle-unit';
+    unit.onclick = () => toggleMechanicalSwitch(type, bit, unit);
+    unit.innerHTML = `
+      <div class="toggle-slot"><div class="toggle-baton"></div></div>
+      <div class="led-bit-label">${type === 'addr' ? 'A' : 'D'}${bit}</div>
+    `;
+    return unit;
+  }
+
+  function createLEDBank(containerId, bitCount, color) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    for(let i=bitCount-1; i>=0; i--) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'led-wrapper';
+      wrapper.innerHTML = `
+        <div class="led ${color}" id="${containerId}-bit-${i}"></div>
+        <div class="led-bit-label">${i}</div>
+      `;
+      container.appendChild(wrapper);
+    }
+  }
+
+  /* --- SWITCH INTERACTION LOGIC --- */
+  function toggleMechanicalSwitch(type, bit, element) {
+    if (!poweredOn) return;
+    playClickSound();
+
+    if (type === 'addr') {
+      addrSwitches ^= (1 << bit);
+      element.classList.toggle('on', !!(addrSwitches & (1 << bit)));
+    } else {
+      dataSwitches ^= (1 << bit);
+      element.classList.toggle('on', !!(dataSwitches & (1 << bit)));
+    }
+  }
+
+  function togglePower() {
+    poweredOn = !poweredOn;
+    document.getElementById('powerSwitch').classList.toggle('on', poweredOn);
+    
+    if(!poweredOn) {
+      if(isRunning) toggleRun();
+      log("POWER OFF");
+    } else {
+      log("SYSTEM POWERED ON. READY.");
+    }
+    renderAll();
+  }
+
+  function toggleManual(show) {
+    const overlay = document.getElementById('manualOverlay');
+    overlay.classList.toggle('open', show);
+  }
+
+  /* --- CPU EXECUTION ENGINE --- */
+  function updateFlags(val) {
+    flagZ = (val & 0xFF) === 0;
+  }
+
+  function step() {
+    if(!poweredOn) return;
+
+    const instr = RAM[PC];
+    const opcode = instr & 0xF0;
+    const operand = instr & 0x0F;
+
+    log(`[PC:0x${PC.toString(16).toUpperCase()}] Executing: 0x${instr.toString(16).padStart(2,'0').toUpperCase()}`);
+    
+    // Advance PC default
+    let nextPC = (PC + 1) & 0x0F;
+
+    switch(opcode) {
+      case 0x00: // NOP
+        break;
+      case 0x10: // LDA imm
+        regA = operand;
+        updateFlags(regA);
+        break;
+      case 0x20: // ADD imm
+        {
+          let res = regA + operand;
+          flagC = res > 0xFF;
+          regA = res & 0xFF;
+          updateFlags(regA);
+        }
+        break;
+      case 0x30: // SUB imm
+        {
+          let res = regA - operand;
+          flagC = res < 0;
+          regA = res & 0xFF;
+          updateFlags(regA);
+        }
+        break;
+      case 0x40: // AND imm
+        regA = (regA & operand) & 0xFF;
+        updateFlags(regA);
+        break;
+      case 0x50: // OR imm
+        regA = (regA | operand) & 0xFF;
+        updateFlags(regA);
+        break;
+      case 0x60: // XOR imm
+        regA = (regA ^ operand) & 0xFF;
+        updateFlags(regA);
+        break;
+      case 0x70: // NOT
+        regA = (~regA) & 0xFF;
+        updateFlags(regA);
+        break;
+      case 0x80: // JMP addr
+        nextPC = operand;
+        break;
+      case 0x90: // JZ addr
+        if (flagZ) nextPC = operand;
+        break;
+      case 0xF0: // HALT
+        log(">>> HALT INSTRUCTION REACHED <<<");
+        if (isRunning) toggleRun();
+        return;
+      default:
+        log(`UNKNOWN OPCODE: 0x${opcode.toString(16)}`);
+    }
+
+    PC = nextPC;
+    renderAll();
+  }
+
+  function toggleRun() {
+    if(!poweredOn) return;
+    isRunning = !isRunning;
+    const btn = document.getElementById('runBtn');
+    
+    if(isRunning) {
+      btn.style.background = 'linear-gradient(to bottom, #00aa00, #006600)';
+      btn.innerText = 'STOP';
+      runInterval = setInterval(step, 400); // Clock Speed: ~2.5 Hz
+    } else {
+      btn.style.background = '';
+      btn.innerText = 'RUN / STOP';
+      clearInterval(runInterval);
+    }
+  }
+
+  function resetCPU() {
+    if(!poweredOn) return;
+    PC = 0;
+    renderAll();
+    log("Program Counter reset to 0x0.");
+  }
+
+  function depositData() {
+    if(!poweredOn) return;
+    playClickSound();
+    RAM[addrSwitches] = dataSwitches;
+    log(`Deposited 0x${dataSwitches.toString(16).padStart(2,'0').toUpperCase()} into RAM Address 0x${addrSwitches.toString(16).toUpperCase()}`);
+  }
+
+  function examineData() {
+    if(!poweredOn) return;
+    playClickSound();
+    const val = RAM[addrSwitches];
+    log(`Examine RAM 0x${addrSwitches.toString(16).toUpperCase()}: 0x${val.toString(16).padStart(2,'0').toUpperCase()}`);
+  }
+
+  function clearMemory() {
+    if(!poweredOn) return;
+    RAM.fill(0);
+    regA = 0;
+    PC = 0;
+    flagZ = false;
+    flagC = false;
+    renderAll();
+    log("RAM cleared.");
+  }
+
+  /* --- RENDER FUNCTIONS --- */
+  function renderAll() {
+    // Render Register A LEDs
+    for(let i=0; i<8; i++) {
+      const el = document.getElementById(`led-regA-bit-${i}`);
+      if(el) el.classList.toggle('active', poweredOn && !!(regA & (1 << i)));
+    }
+
+    // Render PC LEDs
+    for(let i=0; i<4; i++) {
+      const el = document.getElementById(`led-pc-bit-${i}`);
+      if(el) el.classList.toggle('active', poweredOn && !!(PC & (1 << i)));
+    }
+
+    // Status Flag LEDs
+    document.getElementById('flag-z').classList.toggle('active', poweredOn && flagZ);
+    document.getElementById('flag-c').classList.toggle('active', poweredOn && flagC);
+  }
+
+  function log(msg) {
+    const monitor = document.getElementById('monitor');
+    monitor.innerHTML += `<div>> ${msg}</div>`;
+    monitor.scrollTop = monitor.scrollHeight;
+  }
+
+  /* --- PRELOADED FANTASY EXAMPLES --- */
+  function loadProgram(type) {
+    if(!poweredOn) {
+      alert("Power on the machine first!");
+      return;
+    }
+    clearMemory();
+
+    if(type === 'logic') {
+      // Boolean Operations: (5 AND 3) XOR 0x0F
+      RAM[0] = 0x15; // LDA 5
+      RAM[1] = 0x43; // AND 3 (Result: 1)
+      RAM[2] = 0x6F; // XOR 15 (Result: 14 / 0x0E)
+      RAM[3] = 0xF0; // HALT
+      log("Loaded Program: Boolean Logic");
+    } 
+    else if(type === 'math') {
+      // Maths: 4 + 7 - 2
+      RAM[0] = 0x14; // LDA 4
+      RAM[1] = 0x27; // ADD 7 (Result: 11)
+      RAM[2] = 0x32; // SUB 2 (Result: 9)
+      RAM[3] = 0xF0; // HALT
+      log("Loaded Program: Basic Maths");
+    }
+    else if(type === 'state') {
+      // State Checking: Subtract down to Zero to raise Zero Flag
+      RAM[0] = 0x13; // LDA 3
+      RAM[1] = 0x33; // SUB 3 (Result: 0 -> Sets Zero Flag!)
+      RAM[2] = 0xF0; // HALT
+      log("Loaded Program: State & Flags Check");
+    }
+    else if(type === 'loop') {
+      // Flow Control: Count up by 1 infinitely
+      RAM[0] = 0x21; // ADD 1
+      RAM[1] = 0x80; // JMP 0 (Loop back to address 0x0)
+      log("Loaded Program: Endless Loop Counter");
+    }
+    renderAll();
+  }
+
+  // Initialize UI on load
+  window.onload = initUI;
+</script>
+</body>
+</html>

@@ -1,0 +1,1862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RETRO-32 // Mechanical Fantasy Computer</title>
+<style>
+:root{
+  --bg:#08090b;
+  --chassis-1:#2c2f38;
+  --chassis-2:#15161a;
+  --bezel:#1c1e23;
+  --panel:#101114;
+  --panel-inset: inset 0 2px 10px rgba(0,0,0,.7);
+  --metal-light:#d3d6dc;
+  --metal-dark:#3a3d44;
+  --brass:#c9a227;
+  --brass-light:#eccf72;
+  --brass-dark:#7a621a;
+  --led-red:#ff3b30;
+  --led-red-off:#3a0f0d;
+  --led-green:#3dff77;
+  --led-green-off:#0d2013;
+  --led-amber:#ffb020;
+  --led-amber-off:#2a1c08;
+  --phosphor:#ffb020;
+  --phosphor-dim:#6b4b12;
+  --text-dim:#888e9c;
+  --text-bright:#e9ebf1;
+  --font-label:'Arial Narrow',Arial,Helvetica,sans-serif;
+  --font-mono:'DejaVu Sans Mono','Consolas','Courier New',monospace;
+  --r-sm:4px;
+  --r-md:8px;
+  --r-lg:14px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(ellipse at top, #14161a 0%, var(--bg) 60%);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:28px 14px 60px;
+  color:var(--text-bright);
+  font-family:var(--font-mono);
+}
+button{font-family:inherit;}
+::selection{background:var(--brass);color:#1a1400;}
+
+/* ---------- focus visibility ---------- */
+button:focus-visible,
+.toggle-switch:focus-visible,
+.rocker:focus-visible,
+.cart-slot:focus-visible,
+.term-screen:focus-visible,
+textarea:focus-visible,
+.knob-pos:focus-visible{
+  outline:2px solid var(--led-amber);
+  outline-offset:2px;
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important;}
+}
+
+/* ================= CHASSIS ================= */
+.chassis{
+  width:min(1180px,100%);
+  background:linear-gradient(150deg,var(--chassis-1),var(--chassis-2));
+  border:4px solid var(--metal-dark);
+  border-radius:var(--r-lg);
+  box-shadow:0 30px 70px rgba(0,0,0,.75), inset 0 1px 1px rgba(255,255,255,.08);
+  padding:26px;
+  position:relative;
+  transition:filter .4s ease, opacity .4s ease;
+}
+.chassis.powered-off .interactive-zone{
+  filter:grayscale(1) brightness(.35);
+  pointer-events:none;
+}
+.chassis.powered-off .term-screen{opacity:.15;}
+.chassis::before{
+  content:"";
+  position:absolute; inset:0;
+  border-radius:var(--r-lg);
+  background:repeating-linear-gradient(180deg, rgba(255,255,255,.015) 0px, rgba(255,255,255,.015) 1px, transparent 1px, transparent 3px);
+  pointer-events:none;
+}
+
+/* ---------- header / brand / power ---------- */
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:16px;
+  border-bottom:2px solid #3a3d47;
+  padding-bottom:16px;
+  margin-bottom:22px;
+}
+.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+.brand h1{
+  font-family:var(--font-label);
+  font-weight:800;
+  font-size:30px;
+  letter-spacing:5px;
+  color:var(--text-bright);
+  text-shadow:0 0 12px rgba(255,255,255,.12);
+  margin:0;
+}
+.brand span{
+  font-size:11px;
+  color:var(--text-dim);
+  letter-spacing:2px;
+  text-transform:uppercase;
+  font-family:var(--font-label);
+}
+.badge{
+  font-size:10px;
+  letter-spacing:2px;
+  color:var(--brass-light);
+  border:1px solid var(--brass-dark);
+  padding:3px 8px;
+  border-radius:3px;
+  background:linear-gradient(180deg,rgba(201,162,39,.15),rgba(201,162,39,.03));
+  text-transform:uppercase;
+  font-family:var(--font-label);
+}
+.header-right{display:flex;align-items:center;gap:22px;flex-wrap:wrap;}
+.power-section{display:flex;align-items:center;gap:12px;}
+.power-label{
+  font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text-dim);
+  font-family:var(--font-label); text-transform:uppercase;
+}
+.rocker{
+  width:46px;height:72px;background:#0c0d0f;border-radius:6px;padding:4px;
+  box-shadow:inset 0 0 8px rgba(0,0,0,.85), 0 2px 3px rgba(255,255,255,.05);
+  cursor:pointer; border:1px solid #2a2c31;
+}
+.rocker-btn{
+  width:100%;height:100%;border-radius:4px;
+  background:linear-gradient(to bottom,#3c1414 0%,#7a1414 50%,#4a0d0d 100%);
+  border:1px solid #631212;
+  box-shadow:inset 0 -4px 6px rgba(0,0,0,.6);
+  display:flex;align-items:center;justify-content:center;
+  color:#ff9d9d;font-size:9px;font-weight:800;letter-spacing:1px;
+  font-family:var(--font-label);
+  transition:all .15s ease;
+}
+.rocker.on .rocker-btn{
+  background:linear-gradient(to bottom,#c81f1f 0%,#ff3b30 45%,#9c0f0f 100%);
+  box-shadow:inset 0 4px 8px rgba(255,255,255,.35), 0 0 16px rgba(255,59,48,.65);
+  color:#fff;
+}
+
+/* manual button (book tab) */
+.manual-tab{
+  background:linear-gradient(180deg,#e8dcb8,#cdbd8c);
+  color:#2c2410;
+  border:1px solid #8c7a3f;
+  border-radius:4px;
+  padding:9px 14px;
+  font-family:var(--font-label);
+  font-weight:800;
+  font-size:11px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  cursor:pointer;
+  box-shadow:0 2px 0 #5a4c1f, 0 4px 8px rgba(0,0,0,.4);
+}
+.manual-tab:hover{filter:brightness(1.06);}
+.manual-tab:active{transform:translateY(2px); box-shadow:0 0 0 #5a4c1f;}
+
+/* ================= LAYOUT GRID ================= */
+.console-grid{
+  display:grid;
+  grid-template-columns: 1.15fr .85fr;
+  gap:22px;
+  margin-bottom:22px;
+}
+@media (max-width:940px){
+  .console-grid{grid-template-columns:1fr;}
+}
+.col{display:flex;flex-direction:column;gap:22px;}
+
+.panel-box{
+  background:var(--panel);
+  border:2px solid #24262c;
+  border-radius:var(--r-md);
+  padding:16px 16px 18px;
+  box-shadow:var(--panel-inset);
+}
+.panel-title{
+  font-family:var(--font-label);
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:2px;
+  color:var(--text-dim);
+  margin-bottom:12px;
+  text-transform:uppercase;
+  border-bottom:1px dotted #2a2c32;
+  padding-bottom:7px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.panel-title small{color:#5a5e6b;font-weight:600;letter-spacing:1px;}
+
+/* ================= CARTRIDGE BAY ================= */
+.cart-bay{display:flex;gap:12px;flex-wrap:wrap;align-items:stretch;}
+.cart-slot{
+  flex:1 1 180px;
+  min-width:150px;
+  background:linear-gradient(160deg,#1c1e24,#111216);
+  border:2px solid #2a2c33;
+  border-radius:6px;
+  padding:12px 12px 10px;
+  cursor:pointer;
+  position:relative;
+  transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+  overflow:hidden;
+}
+.cart-slot::before{
+  content:"";
+  position:absolute; left:10px; right:10px; top:6px; height:5px;
+  background:repeating-linear-gradient(90deg, #3a3d44 0 3px, transparent 3px 6px);
+  border-radius:2px; opacity:.5;
+}
+.cart-slot .cart-led{
+  position:absolute; top:10px; right:10px;
+  width:8px;height:8px;border-radius:50%;
+  background:var(--led-green-off);
+  box-shadow:inset 0 0 2px rgba(0,0,0,.8);
+}
+.cart-slot .cart-name{
+  font-family:var(--font-label);
+  font-weight:800;
+  font-size:12.5px;
+  letter-spacing:1px;
+  color:var(--metal-light);
+  margin-top:16px;
+  text-transform:uppercase;
+}
+.cart-slot .cart-code{
+  font-size:10px; color:var(--brass-light); letter-spacing:2px; margin-top:2px;
+  font-family:var(--font-mono);
+}
+.cart-slot .cart-desc{
+  font-size:10.5px; color:var(--text-dim); margin-top:8px; line-height:1.4;
+}
+.cart-slot:hover{border-color:var(--brass-dark); transform:translateY(-2px);}
+.cart-slot.active{
+  border-color:var(--brass);
+  box-shadow:0 0 0 1px var(--brass-dark), 0 6px 18px rgba(201,162,39,.18);
+  transform:translateY(1px);
+}
+.cart-slot.active .cart-led{
+  background:var(--led-green);
+  box-shadow:0 0 8px var(--led-green), inset 0 0 2px rgba(0,0,0,.4);
+}
+.cart-bay-footer{
+  display:flex; justify-content:space-between; align-items:center;
+  margin-top:12px; gap:10px; flex-wrap:wrap;
+}
+.mini-btn{
+  background:linear-gradient(180deg,#33363e,#1b1c21);
+  color:var(--text-bright);
+  border:1px solid #45484f;
+  border-radius:4px;
+  padding:7px 12px;
+  font-family:var(--font-label);
+  font-weight:700;
+  font-size:10.5px;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  cursor:pointer;
+}
+.mini-btn:hover{border-color:var(--brass);}
+.mini-btn:active{transform:translateY(1px);}
+.cart-status{font-size:10.5px;color:var(--text-dim);}
+.cart-status b{color:var(--brass-light);}
+
+/* ================= LED / SWITCH COMPONENTS ================= */
+.bank{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.bank:last-child{margin-bottom:0;}
+.bank-label{
+  font-size:10px;letter-spacing:1.5px;color:var(--text-dim);
+  font-family:var(--font-label); text-transform:uppercase;
+}
+.led-row, .switch-row{display:flex;gap:6px;flex-wrap:wrap;}
+.led-cell{display:flex;flex-direction:column;align-items:center;gap:3px;width:24px;}
+.led{
+  width:13px;height:13px;border-radius:50%;
+  box-shadow:inset 0 0 3px rgba(0,0,0,.85), 0 1px 1px rgba(255,255,255,.05);
+  transition:background .08s linear, box-shadow .08s linear;
+}
+.led.red{background:var(--led-red-off);}
+.led.red.on{background:var(--led-red); box-shadow:0 0 9px var(--led-red), inset 0 0 3px rgba(0,0,0,.4);}
+.led.green{background:var(--led-green-off);}
+.led.green.on{background:var(--led-green); box-shadow:0 0 9px var(--led-green), inset 0 0 3px rgba(0,0,0,.4);}
+.led.amber{background:var(--led-amber-off);}
+.led.amber.on{background:var(--led-amber); box-shadow:0 0 9px var(--led-amber), inset 0 0 3px rgba(0,0,0,.4);}
+.led-bit{font-size:8px;color:#565a64;font-family:var(--font-mono);}
+
+.toggle-switch{
+  width:22px;height:40px;
+  background:#0b0c0e;
+  border-radius:4px;
+  padding:3px;
+  box-shadow:inset 0 0 6px rgba(0,0,0,.85);
+  cursor:pointer;
+  display:flex;align-items:flex-end;justify-content:center;
+  border:1px solid #232529;
+}
+.toggle-switch .lever{
+  width:14px;height:18px;border-radius:3px;
+  background:linear-gradient(135deg,#e8e8ea 0%,#9a9ba0 45%,#4d4e53 100%);
+  border:1px solid #2c2d30;
+  box-shadow:0 1px 2px rgba(0,0,0,.5);
+  transition:transform .1s ease;
+}
+.toggle-switch.up .lever{transform:translateY(-16px);}
+.toggle-switch .bit-label{font-size:8px;color:#565a64;text-align:center;margin-top:3px;font-family:var(--font-mono);}
+.switch-cell{display:flex;flex-direction:column;align-items:center;}
+
+/* ================= REGISTER READOUTS ================= */
+.reg-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+@media (max-width:520px){.reg-grid{grid-template-columns:repeat(2,1fr);}}
+.reg-cell{
+  background:#000; border:1px solid #262830; border-radius:4px;
+  padding:6px 8px; text-align:center;
+}
+.reg-cell .reg-name{font-size:9.5px;color:var(--brass-light);letter-spacing:1.5px;font-family:var(--font-label);}
+.reg-cell .reg-val{
+  font-family:var(--font-mono); font-size:15px; letter-spacing:2px;
+  color:var(--phosphor); text-shadow:0 0 6px rgba(255,176,32,.55);
+  margin-top:2px;
+}
+.flags-row{display:flex;gap:16px;margin-top:12px;}
+.flag-cell{display:flex;align-items:center;gap:6px;}
+.flag-cell .flag-name{font-size:10px;color:var(--text-dim);font-family:var(--font-label);letter-spacing:1px;}
+
+/* ================= CONTROLS ================= */
+.control-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+.ctl-btn{
+  flex:1 1 auto;
+  background:linear-gradient(180deg,#33363e,#1b1c21);
+  color:var(--text-bright);
+  border:1px solid #45484f;
+  border-radius:4px;
+  padding:9px 10px;
+  font-family:var(--font-label);
+  font-weight:800;
+  font-size:10.5px;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  cursor:pointer;
+  min-width:82px;
+  position:relative;
+}
+.ctl-btn:hover{border-color:var(--brass);}
+.ctl-btn:active{transform:translateY(1px);}
+.ctl-btn.primary{border-color:var(--brass-dark); background:linear-gradient(180deg,#3a341f,#1f1b10); color:var(--brass-light);}
+.ctl-btn.danger-on{background:linear-gradient(180deg,#5a2020,#2b0f0f); border-color:#7a2626; color:#ffb3ac;}
+.ctl-btn:disabled{opacity:.35; cursor:not-allowed;}
+
+.knob-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.knob-label{font-size:10px;color:var(--text-dim);font-family:var(--font-label);letter-spacing:1.5px;text-transform:uppercase;}
+.knob{display:flex;border:1px solid #2a2c33;border-radius:4px;overflow:hidden;}
+.knob-pos{
+  background:#16171b;color:#71757f;border:none;border-right:1px solid #2a2c33;
+  padding:7px 9px;font-size:10px;font-family:var(--font-mono);cursor:pointer;
+}
+.knob-pos:last-child{border-right:none;}
+.knob-pos.active{background:var(--brass); color:#1a1400; font-weight:700;}
+
+/* ================= TERMINAL ================= */
+.term-wrap{position:relative;}
+.term-screen{
+  background:#050604;
+  border:3px solid #1c1d21;
+  border-radius:6px;
+  padding:14px 16px;
+  height:260px;
+  overflow-y:auto;
+  font-family:var(--font-mono);
+  font-size:13px;
+  line-height:1.5;
+  color:var(--phosphor);
+  text-shadow:0 0 5px rgba(255,176,32,.45);
+  white-space:pre-wrap;
+  word-break:break-word;
+  box-shadow:inset 0 0 30px rgba(0,0,0,.85);
+  position:relative;
+}
+.term-screen::after{
+  content:"";
+  position:absolute; inset:0;
+  background:repeating-linear-gradient(180deg, rgba(0,0,0,.18) 0px, rgba(0,0,0,.18) 1px, transparent 1px, transparent 3px);
+  pointer-events:none; border-radius:4px;
+}
+.term-screen.focused{box-shadow:inset 0 0 30px rgba(0,0,0,.85), 0 0 0 2px var(--brass-dark);}
+.term-cursor{display:inline-block;width:8px;height:14px;background:var(--phosphor);vertical-align:middle;animation:blink 1s steps(1) infinite;}
+@keyframes blink{50%{opacity:0;}}
+.term-hint{font-size:10px;color:var(--text-dim);margin-top:6px;font-family:var(--font-label);letter-spacing:1px;}
+
+/* ================= EDITOR ================= */
+textarea#editor{
+  width:100%; height:230px; resize:vertical;
+  background:#08090b; color:#c9cdd6;
+  border:1px solid #24262c; border-radius:4px;
+  padding:10px; font-family:var(--font-mono); font-size:12.5px; line-height:1.5;
+}
+.editor-footer{display:flex;justify-content:space-between;align-items:center;margin-top:10px;flex-wrap:wrap;gap:8px;}
+#asmStatus{font-size:11px;color:var(--text-dim);font-family:var(--font-mono);}
+#asmStatus.err{color:#ff8a80;}
+#asmStatus.ok{color:var(--led-green);}
+
+/* ================= BUS MONITOR NOTE ================= */
+.subnote{font-size:10px;color:#5a5e6b;margin-top:8px;font-family:var(--font-label);letter-spacing:.5px;}
+
+/* ================= MANUAL MODAL ================= */
+.modal-overlay{
+  position:fixed; inset:0; background:rgba(0,0,0,.72);
+  display:none; align-items:center; justify-content:center; padding:24px; z-index:50;
+}
+.modal-overlay.open{display:flex;}
+.manual-page{
+  width:min(880px,100%);
+  max-height:88vh;
+  overflow-y:auto;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.03), rgba(0,0,0,.06)),
+    #ece3c8;
+  color:#241f0f;
+  border-radius:6px;
+  padding:34px 38px 40px;
+  position:relative;
+  box-shadow:0 30px 80px rgba(0,0,0,.6);
+  font-family:Georgia,'Times New Roman',serif;
+}
+.manual-page h2,.manual-page h3{font-family:var(--font-label);letter-spacing:1px;}
+.manual-page h2{font-size:20px;border-bottom:2px solid #b7a259;padding-bottom:8px;margin-top:0;}
+.manual-page h3{font-size:15px;color:#5a4a12;margin-top:26px;}
+.manual-page table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;font-family:var(--font-mono);}
+.manual-page th,.manual-page td{border:1px solid #b7a259;padding:5px 7px;text-align:left;vertical-align:top;}
+.manual-page th{background:#d9c98c;}
+.manual-page code{background:#ddd0a0;padding:1px 4px;border-radius:2px;font-family:var(--font-mono);}
+.manual-page p,.manual-page li{font-size:13px;line-height:1.6;}
+.fastener{
+  position:absolute; width:16px;height:16px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%, #f3d98a, #7a621a 75%);
+  box-shadow:0 1px 3px rgba(0,0,0,.5), inset 0 0 2px rgba(0,0,0,.6);
+}
+.fastener.tl{top:14px;left:14px;} .fastener.tr{top:14px;right:14px;}
+.fastener.bl{bottom:14px;left:14px;} .fastener.br{bottom:14px;right:14px;}
+.modal-close{
+  position:absolute; top:14px; right:44px;
+  background:#241f0f; color:#ece3c8; border:none; border-radius:4px;
+  width:30px;height:30px; cursor:pointer; font-size:14px; font-weight:800;
+}
+.manual-page pre{background:#1b1a14;color:#e8e0c4;padding:10px;border-radius:4px;overflow-x:auto;font-size:11.5px;line-height:1.5;}
+
+.footer-note{
+  margin-top:20px; text-align:center; font-size:10.5px; color:#4b4f5a;
+  font-family:var(--font-label); letter-spacing:1px;
+}
+</style>
+</head>
+<body>
+
+<div class="chassis powered-off" id="chassis">
+  <div class="header">
+    <div class="brand">
+      <h1>RETRO&#8209;32</h1>
+      <span>32&#8209;BIT MECHANICAL FANTASY COMPUTER</span>
+      <span class="badge">4&#8209;BYTE WORD &middot; CARTRIDGE READY</span>
+    </div>
+    <div class="header-right">
+      <button class="manual-tab" id="manualBtn" type="button">&#128214; Manual</button>
+      <div class="power-section">
+        <span class="power-label">Power</span>
+        <div class="rocker" id="powerRocker" role="switch" aria-checked="false" tabindex="0" aria-label="Power switch">
+          <div class="rocker-btn">OFF</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="interactive-zone">
+
+  <!-- ============ CARTRIDGE BAY ============ -->
+  <div class="panel-box" style="margin-bottom:22px;">
+    <div class="panel-title">Cartridge Bay <small>select one, or write your own below</small></div>
+    <div class="cart-bay" id="cartBay"></div>
+    <div class="cart-bay-footer">
+      <button class="mini-btn" id="ejectBtn" type="button">Eject / Blank Machine</button>
+      <div class="cart-status">Loaded: <b id="cartStatus">&mdash; none &mdash;</b></div>
+    </div>
+  </div>
+
+  <div class="console-grid">
+    <!-- ============ LEFT COLUMN ============ -->
+    <div class="col">
+
+      <div class="panel-box">
+        <div class="panel-title">Front Panel &mdash; Manual Address / Data Entry</div>
+        <div class="bank">
+          <div class="bank-label">Address Bus (live)</div>
+          <div class="led-row" id="addrLeds"></div>
+        </div>
+        <div class="bank">
+          <div class="bank-label">Data Bus (live)</div>
+          <div class="led-row" id="dataLeds"></div>
+        </div>
+        <div class="bank">
+          <div class="bank-label">Address Switches</div>
+          <div class="switch-row" id="addrSwitches"></div>
+        </div>
+        <div class="bank">
+          <div class="bank-label">Data Switches</div>
+          <div class="switch-row" id="dataSwitches"></div>
+        </div>
+        <div class="control-row">
+          <button class="ctl-btn" id="examineBtn" type="button">Examine</button>
+          <button class="ctl-btn" id="examineNextBtn" type="button">Examine Next</button>
+          <button class="ctl-btn" id="depositBtn" type="button">Deposit</button>
+          <button class="ctl-btn" id="depositNextBtn" type="button">Deposit Next</button>
+        </div>
+        <div class="subnote">Set an address on the address switches, then Examine to read it or Deposit to write the data switches' value there. Program origin is 0x0080.</div>
+      </div>
+
+      <div class="panel-box">
+        <div class="panel-title">CPU Control</div>
+        <div class="control-row">
+          <button class="ctl-btn primary" id="runStopBtn" type="button">Run</button>
+          <button class="ctl-btn" id="stepBtn" type="button">Step</button>
+          <button class="ctl-btn" id="resetBtn" type="button">Reset</button>
+        </div>
+        <div class="knob-row">
+          <span class="knob-label">Clock</span>
+          <div class="knob" id="clockKnob"></div>
+          <span class="knob-label" id="cyclesReadout" style="margin-left:auto;">0 cycles</span>
+        </div>
+        <div class="flags-row" style="margin-top:14px;">
+          <div class="flag-cell"><div class="led red" id="ledHalt"></div><span class="flag-name">HALT</span></div>
+          <div class="flag-cell"><div class="led green" id="ledRun"></div><span class="flag-name">RUN</span></div>
+          <div class="flag-cell"><div class="led amber" id="flagZ"></div><span class="flag-name">Z</span></div>
+          <div class="flag-cell"><div class="led amber" id="flagC"></div><span class="flag-name">C</span></div>
+          <div class="flag-cell"><div class="led amber" id="flagN"></div><span class="flag-name">N</span></div>
+        </div>
+        <div class="subnote" id="disasmLine" style="margin-top:12px;">&mdash;</div>
+      </div>
+
+      <div class="panel-box">
+        <div class="panel-title">Register File</div>
+        <div class="reg-grid" id="regGrid"></div>
+      </div>
+
+    </div>
+
+    <!-- ============ RIGHT COLUMN ============ -->
+    <div class="col">
+
+      <div class="panel-box">
+        <div class="panel-title">Terminal</div>
+        <div class="term-wrap">
+          <div class="term-screen" id="termScreen" tabindex="0" aria-label="Computer terminal, click and type"></div>
+        </div>
+        <div class="term-hint">Click the screen, then type &mdash; keystrokes are captured by the terminal input port.</div>
+      </div>
+
+      <div class="panel-box">
+        <div class="panel-title">Output / Input Ports</div>
+        <div class="bank">
+          <div class="bank-label">Output Port LEDs (port 0x00)</div>
+          <div class="led-row" id="ledOut"></div>
+        </div>
+        <div class="bank">
+          <div class="bank-label">Input Port Switches (port 0x01)</div>
+          <div class="switch-row" id="ioSwitches"></div>
+        </div>
+      </div>
+
+      <div class="panel-box">
+        <div class="panel-title">Fantasy SSD &amp; Misc <small id="cartIdReadout">CART: &mdash;</small></div>
+        <div class="flags-row">
+          <div class="flag-cell"><div class="led green" id="ledStorage"></div><span class="flag-name">SSD ACTIVITY</span></div>
+        </div>
+        <div class="subnote">256&#215;1 byte fantasy SSD, addressed via ports 0x0A (address) / 0x0B (data). Volatile &mdash; cleared on power-down.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ PROGRAMMER'S CONSOLE ============ -->
+  <div class="panel-box">
+    <div class="panel-title">Programmer's Console <small>write RETRO-32 assembly, then assemble &amp; load</small></div>
+    <textarea id="editor" spellcheck="false"></textarea>
+    <div class="editor-footer">
+      <button class="ctl-btn primary" id="assembleBtn" type="button" style="flex:0 0 auto;">Assemble &amp; Load</button>
+      <span id="asmStatus">Ready.</span>
+    </div>
+  </div>
+
+  </div><!-- /interactive-zone -->
+
+  <div class="footer-note">RETRO-32 &mdash; single-file fantasy computer &middot; no network, no dependencies &middot; press Power to begin</div>
+</div>
+
+<!-- ============ MANUAL MODAL ============ -->
+<div class="modal-overlay" id="manualOverlay">
+  <div class="manual-page" id="manualPage">
+    <div class="fastener tl"></div><div class="fastener tr"></div>
+    <div class="fastener bl"></div><div class="fastener br"></div>
+    <button class="modal-close" id="manualCloseBtn" type="button" aria-label="Close manual">&#10005;</button>
+    <div id="manualContent"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ======================================================================
+   RETRO-32 :: CPU CORE
+   32-bit registers, 64KB byte-addressable memory, fixed 4-byte
+   instruction words: [OPCODE:8][A:8][B:8][C:8]
+   ====================================================================== */
+
+const MEM_SIZE = 0x10000;
+const ORIGIN   = 0x0080;
+const IO_BASE  = 0xF000;
+const IO_TOP   = 0xF0FF;
+const SP_INIT  = 0xFFFC;
+
+const OPS = {
+  NOP:  {code:0x00, form:'NONE',      syntax:'NOP',                desc:'No operation.'},
+  HALT: {code:0x01, form:'NONE',      syntax:'HALT',               desc:'Stop the clock until RESET or a new RUN.'},
+  MOV:  {code:0x02, form:'RR',        syntax:'MOV Rd, Rs',         desc:'Rd = Rs'},
+  MOVI: {code:0x03, form:'R,IMM16',   syntax:'MOVI Rd, imm16',     desc:'Rd = imm16 (zero-extended to 32 bits)'},
+  ADD:  {code:0x04, form:'RRR',       syntax:'ADD Rd, Ra, Rb',     desc:'Rd = Ra + Rb'},
+  SUB:  {code:0x05, form:'RRR',       syntax:'SUB Rd, Ra, Rb',     desc:'Rd = Ra - Rb'},
+  MUL:  {code:0x06, form:'RRR',       syntax:'MUL Rd, Ra, Rb',     desc:'Rd = Ra * Rb'},
+  DIV:  {code:0x07, form:'RRR',       syntax:'DIV Rd, Ra, Rb',     desc:'Rd = Ra / Rb, unsigned integer (0 if Rb=0)'},
+  MOD:  {code:0x08, form:'RRR',       syntax:'MOD Rd, Ra, Rb',     desc:'Rd = Ra % Rb, unsigned (0 if Rb=0)'},
+  ADDI: {code:0x09, form:'RR,IMM8S',  syntax:'ADDI Rd, Ra, imm8',  desc:'Rd = Ra + imm8 (signed -128..127)'},
+  AND:  {code:0x0A, form:'RRR',       syntax:'AND Rd, Ra, Rb',     desc:'Rd = Ra & Rb'},
+  OR:   {code:0x0B, form:'RRR',       syntax:'OR Rd, Ra, Rb',      desc:'Rd = Ra | Rb'},
+  XOR:  {code:0x0C, form:'RRR',       syntax:'XOR Rd, Ra, Rb',     desc:'Rd = Ra ^ Rb'},
+  NOT:  {code:0x0D, form:'RR',        syntax:'NOT Rd, Ra',         desc:'Rd = ~Ra'},
+  SHL:  {code:0x0E, form:'RR,IMM8',   syntax:'SHL Rd, Ra, imm8',   desc:'Rd = Ra << imm8 (0-31)'},
+  SHR:  {code:0x0F, form:'RR,IMM8',   syntax:'SHR Rd, Ra, imm8',   desc:'Rd = Ra >>> imm8, logical (0-31)'},
+  INC:  {code:0x10, form:'R',         syntax:'INC Rd',             desc:'Rd = Rd + 1'},
+  DEC:  {code:0x11, form:'R',         syntax:'DEC Rd',             desc:'Rd = Rd - 1'},
+  CMP:  {code:0x12, form:'RR',        syntax:'CMP Ra, Rb',         desc:'Compare Ra,Rb (unsigned) -> sets Z/C/N'},
+  CMPI: {code:0x13, form:'R,IMM8',    syntax:'CMPI Ra, imm8',      desc:'Compare Ra,imm8 (unsigned) -> sets Z/C/N'},
+  JMP:  {code:0x14, form:'ADDR16',    syntax:'JMP addr',           desc:'PC = addr'},
+  JZ:   {code:0x15, form:'ADDR16',    syntax:'JZ addr',            desc:'if Z=1: PC = addr'},
+  JNZ:  {code:0x16, form:'ADDR16',    syntax:'JNZ addr',           desc:'if Z=0: PC = addr'},
+  JC:   {code:0x17, form:'ADDR16',    syntax:'JC addr',            desc:'if C=1: PC = addr  (unsigned <)'},
+  JNC:  {code:0x18, form:'ADDR16',    syntax:'JNC addr',           desc:'if C=0: PC = addr  (unsigned >=)'},
+  JN:   {code:0x19, form:'ADDR16',    syntax:'JN addr',            desc:'if N=1: PC = addr  (result negative)'},
+  JNN:  {code:0x1A, form:'ADDR16',    syntax:'JNN addr',           desc:'if N=0: PC = addr'},
+  CALL: {code:0x1B, form:'ADDR16',    syntax:'CALL addr',          desc:'push return address; PC = addr'},
+  RET:  {code:0x1C, form:'NONE',      syntax:'RET',                desc:'pop PC'},
+  PUSH: {code:0x1D, form:'R',         syntax:'PUSH Rs',            desc:'push Rs (32-bit) onto the stack'},
+  POP:  {code:0x1E, form:'R',         syntax:'POP Rd',             desc:'pop 32-bit value into Rd'},
+  LDW:  {code:0x1F, form:'R,ADDR16',  syntax:'LDW Rd, [addr]',     desc:'Rd = 32-bit word at [addr]'},
+  STW:  {code:0x20, form:'ADDR16,R',  syntax:'STW [addr], Rs',     desc:'[addr..addr+3] = Rs'},
+  LDB:  {code:0x21, form:'R,ADDR16',  syntax:'LDB Rd, [addr]',     desc:'Rd = byte at [addr] (zero-extended)'},
+  STB:  {code:0x22, form:'ADDR16,R',  syntax:'STB [addr], Rs',     desc:'[addr] = low byte of Rs'},
+  LDR:  {code:0x23, form:'R,RBOFF',   syntax:'LDR Rd, [Rb+off]',   desc:'Rd = 32-bit word at [Rb+off8]'},
+  STR:  {code:0x24, form:'RBOFF,R',   syntax:'STR [Rb+off], Rs',   desc:'[Rb+off8..+3] = Rs'},
+  LDRB: {code:0x25, form:'R,RBOFF',   syntax:'LDRB Rd, [Rb+off]',  desc:'Rd = byte at [Rb+off8] (zero-extended)'},
+  STRB: {code:0x26, form:'RBOFF,R',   syntax:'STRB [Rb+off], Rs',  desc:'[Rb+off8] = low byte of Rs'},
+  IN:   {code:0x27, form:'R,IMM8',    syntax:'IN Rd, port',        desc:'Rd = I/O port[port] (zero-extended)'},
+  OUT:  {code:0x28, form:'IMM8,R',    syntax:'OUT port, Rs',       desc:'I/O port[port] = low byte of Rs'},
+  INT:  {code:0x29, form:'IMM8',      syntax:'INT vec',            desc:'software interrupt: push PC+flags, jump to vector[vec]'},
+  IRET: {code:0x2A, form:'NONE',      syntax:'IRET',               desc:'return from interrupt: pop flags, pop PC'},
+  EI:   {code:0x2B, form:'NONE',      syntax:'EI',                 desc:'enable maskable (hardware) interrupts'},
+  DI:   {code:0x2C, form:'NONE',      syntax:'DI',                 desc:'disable maskable (hardware) interrupts'}
+};
+const OPS_BY_CODE = {};
+Object.keys(OPS).forEach(function(k){ OPS_BY_CODE[OPS[k].code] = Object.assign({mnem:k}, OPS[k]); });
+
+/* ---------------- machine state ---------------- */
+const mem = new Uint8Array(MEM_SIZE);
+const storage = new Uint8Array(256);
+const regs = new Int32Array(8);
+let pc = ORIGIN, sp = SP_INIT;
+let flags = {Z:0, C:0, N:0};
+let halted = false;
+let interruptsEnabled = false;
+let cycles = 0;
+let timer16 = 0;
+let storageAddr = 0;
+let ledOutVal = 0;
+let switchInVal = 0;
+let termInLatch = 0, termReady = 0;
+let busAddress = 0, busData = 0;
+let lastStorageActivity = 0; // ui pulse timer
+
+function u32(x){ return x >>> 0; }
+
+function readByte(addr){
+  addr = addr & 0xFFFF;
+  let val;
+  if(addr >= IO_BASE && addr <= IO_TOP){
+    val = ioRead(addr - IO_BASE);
+  } else {
+    val = mem[addr];
+  }
+  busAddress = addr; busData = val & 0xFF;
+  return val & 0xFF;
+}
+function writeByte(addr, val){
+  addr = addr & 0xFFFF; val = val & 0xFF;
+  if(addr >= IO_BASE && addr <= IO_TOP){
+    ioWrite(addr - IO_BASE, val);
+  } else {
+    mem[addr] = val;
+  }
+  busAddress = addr; busData = val;
+}
+function readWord(addr){
+  return u32((readByte(addr)<<24) | (readByte(addr+1)<<16) | (readByte(addr+2)<<8) | readByte(addr+3));
+}
+function writeWord(addr, val){
+  val = u32(val);
+  writeByte(addr,   (val>>>24)&0xFF);
+  writeByte(addr+1, (val>>>16)&0xFF);
+  writeByte(addr+2, (val>>>8)&0xFF);
+  writeByte(addr+3, val&0xFF);
+}
+
+function ioRead(port){
+  switch(port){
+    case 0x00: return ledOutVal & 0xFF;
+    case 0x01: return switchInVal & 0xFF;
+    case 0x03: { const v = termInLatch & 0xFF; termReady = 0; return v; }
+    case 0x04: return termReady & 0x01;
+    case 0x06: return Math.floor(Math.random()*256) & 0xFF;
+    case 0x07: return (timer16 >>> 8) & 0xFF;
+    case 0x08: return timer16 & 0xFF;
+    case 0x09: return window.__retro32_cartId===undefined ? 0xFF : window.__retro32_cartId;
+    case 0x0B: lastStorageActivity = 6; return storage[storageAddr & 0xFF];
+    default: return 0;
+  }
+}
+function ioWrite(port, val){
+  switch(port){
+    case 0x00: ledOutVal = val; break;
+    case 0x02: termPrintChar(val); break;
+    case 0x05: termClear(); break;
+    case 0x0A: storageAddr = val & 0xFF; break;
+    case 0x0B: lastStorageActivity = 6; storage[storageAddr & 0xFF] = val; break;
+    default: break;
+  }
+}
+
+function setZN(result){
+  const v = u32(result);
+  flags.Z = (v === 0) ? 1 : 0;
+  flags.N = (v >>> 31) & 1;
+}
+function doCompare(a,b){
+  a = u32(a); b = u32(b);
+  flags.Z = (a === b) ? 1 : 0;
+  flags.C = (a < b) ? 1 : 0;
+  const diff = u32(a - b);
+  flags.N = (diff >>> 31) & 1;
+}
+
+function vectorTarget(vec){
+  const slot = (vec & 0x1F) * 4; // 32 vectors, 4 bytes each, low 2 bytes = addr16
+  return ((mem[slot+2] << 8) | mem[slot+3]) & 0xFFFF;
+}
+function triggerInterrupt(vec){
+  sp = u32(sp - 4); writeWord(sp, pc);
+  const packedFlags = (flags.Z) | (flags.C<<1) | (flags.N<<2);
+  sp = u32(sp - 4); writeWord(sp, packedFlags);
+  interruptsEnabled = false;
+  pc = vectorTarget(vec);
+}
+
+function execute(op, A, B, C){
+  const info = OPS_BY_CODE[op];
+  if(!info){ return; } // unknown opcode: treat as NOP-ish, no crash
+  const addr16 = (B<<8)|C;
+  const off8 = (C<<24)>>24;
+  switch(info.mnem){
+    case 'NOP': break;
+    case 'HALT': halted = true; break;
+    case 'MOV': regs[A] = regs[B]; break;
+    case 'MOVI': regs[A] = addr16; break;
+    case 'ADD': { const a=u32(regs[B]), b=u32(regs[C]); const r=a+b; flags.C=(r>0xFFFFFFFF)?1:0; regs[A]=u32(r); setZN(regs[A]); break; }
+    case 'SUB': { const a=u32(regs[B]), b=u32(regs[C]); flags.C=(a<b)?1:0; regs[A]=u32(a-b); setZN(regs[A]); break; }
+    case 'MUL': { regs[A]=u32(u32(regs[B]) * u32(regs[C])); setZN(regs[A]); break; }
+    case 'DIV': { const b=u32(regs[C]); regs[A] = b===0 ? 0 : u32(Math.floor(u32(regs[B])/b)); setZN(regs[A]); break; }
+    case 'MOD': { const b=u32(regs[C]); regs[A] = b===0 ? 0 : u32(u32(regs[B]) % b); setZN(regs[A]); break; }
+    case 'ADDI': { regs[A] = u32(regs[B] + off8); setZN(regs[A]); break; }
+    case 'AND': regs[A] = u32(regs[B] & regs[C]); setZN(regs[A]); break;
+    case 'OR':  regs[A] = u32(regs[B] | regs[C]); setZN(regs[A]); break;
+    case 'XOR': regs[A] = u32(regs[B] ^ regs[C]); setZN(regs[A]); break;
+    case 'NOT': regs[A] = u32(~regs[B]); setZN(regs[A]); break;
+    case 'SHL': { const n=C&31; const v=u32(regs[B]); flags.C = n>0 ? ((v>>>(32-n))&1) : 0; regs[A]=u32(v<<n); setZN(regs[A]); break; }
+    case 'SHR': { const n=C&31; const v=u32(regs[B]); flags.C = n>0 ? ((v>>>(n-1))&1) : 0; regs[A]=u32(v>>>n); setZN(regs[A]); break; }
+    case 'INC': regs[A]=u32(regs[A]+1); setZN(regs[A]); break;
+    case 'DEC': regs[A]=u32(regs[A]-1); setZN(regs[A]); break;
+    case 'CMP': doCompare(regs[A], regs[B]); break;
+    case 'CMPI': doCompare(regs[A], B); break;
+    case 'JMP': pc = addr16; break;
+    case 'JZ':  if(flags.Z) pc = addr16; break;
+    case 'JNZ': if(!flags.Z) pc = addr16; break;
+    case 'JC':  if(flags.C) pc = addr16; break;
+    case 'JNC': if(!flags.C) pc = addr16; break;
+    case 'JN':  if(flags.N) pc = addr16; break;
+    case 'JNN': if(!flags.N) pc = addr16; break;
+    case 'CALL': sp = u32(sp-4); writeWord(sp, pc); pc = addr16; break;
+    case 'RET': pc = readWord(sp); sp = u32(sp+4); break;
+    case 'PUSH': sp = u32(sp-4); writeWord(sp, regs[A]); break;
+    case 'POP': regs[A] = readWord(sp); sp = u32(sp+4); break;
+    case 'LDW': regs[A] = readWord(addr16); break;
+    case 'STW': writeWord(addr16, regs[A]); break;
+    case 'LDB': regs[A] = readByte(addr16); break;
+    case 'STB': writeByte(addr16, regs[A]); break;
+    case 'LDR': regs[A] = readWord(u32(regs[B]+off8)); break;
+    case 'STR': writeWord(u32(regs[B]+off8), regs[A]); break;
+    case 'LDRB': regs[A] = readByte(u32(regs[B]+off8)); break;
+    case 'STRB': writeByte(u32(regs[B]+off8), regs[A]); break;
+    case 'IN': regs[A] = readByte(IO_BASE + B); break;
+    case 'OUT': writeByte(IO_BASE + A, regs[B]); break;
+    case 'INT': triggerInterrupt(A); break;
+    case 'IRET': { const packed = readWord(sp); sp=u32(sp+4); pc = readWord(sp); sp=u32(sp+4);
+                    flags.Z=packed&1; flags.C=(packed>>1)&1; flags.N=(packed>>2)&1; break; }
+    case 'EI': interruptsEnabled = true; break;
+    case 'DI': interruptsEnabled = false; break;
+    default: break;
+  }
+}
+
+function cpuStep(){
+  if(halted) return false;
+  const addr = pc & 0xFFFF;
+  const op = readByte(addr);
+  const A = readByte(addr+1);
+  const B = readByte(addr+2);
+  const C = readByte(addr+3);
+  pc = u32(pc + 4);
+  execute(op, A, B, C);
+  cycles++;
+  timer16 = (timer16 + 1) & 0xFFFF;
+  if(timerIrqEnabled && interruptsEnabled && timer16 === 0){
+    triggerInterrupt(1);
+  }
+  return !halted;
+}
+
+function disassemble(addr){
+  addr = addr & 0xFFFF;
+  const op = mem[addr], A = mem[addr+1], B = mem[addr+2], C = mem[addr+3];
+  const info = OPS_BY_CODE[op];
+  if(!info) return '0x'+hex(op,2)+' ??? (unknown opcode)';
+  const addr16 = (B<<8)|C;
+  switch(info.form){
+    case 'NONE': return info.mnem;
+    case 'R': return info.mnem+' R'+A;
+    case 'RR': return info.mnem+' R'+A+', R'+B;
+    case 'RRR': return info.mnem+' R'+A+', R'+B+', R'+C;
+    case 'RR,IMM8': case 'RR,IMM8S': return info.mnem+' R'+A+', R'+B+', '+C;
+    case 'R,IMM16': return info.mnem+' R'+A+', 0x'+hex(addr16,4);
+    case 'R,IMM8': return info.mnem+' R'+A+', '+B;
+    case 'IMM8,R': return info.mnem+' '+A+', R'+B;
+    case 'IMM8': return info.mnem+' '+A;
+    case 'ADDR16': return info.mnem+' 0x'+hex(addr16,4);
+    case 'R,ADDR16': return info.mnem+' R'+A+', [0x'+hex(addr16,4)+']';
+    case 'ADDR16,R': return info.mnem+' [0x'+hex(addr16,4)+'], R'+A;
+    case 'R,RBOFF': return info.mnem+' R'+A+', [R'+B+((C<<24>>24)>=0?'+':'')+(C<<24>>24)+']';
+    case 'RBOFF,R': return info.mnem+' [R'+B+((C<<24>>24)>=0?'+':'')+(C<<24>>24)+'], R'+A;
+    default: return info.mnem;
+  }
+}
+
+function hex(v,digits){
+  v = (v>>>0).toString(16).toUpperCase();
+  while(v.length < digits) v = '0'+v;
+  return v;
+}
+
+function resetCPU(){
+  pc = ORIGIN; sp = SP_INIT;
+  for(let i=0;i<8;i++) regs[i]=0;
+  flags = {Z:0,C:0,N:0};
+  halted = false;
+  interruptsEnabled = false;
+  cycles = 0; timer16 = 0;
+  busAddress = ORIGIN; busData = 0;
+}
+function hardReset(){
+  mem.fill(0);
+  storage.fill(0);
+  ledOutVal = 0; switchInVal = 0; storageAddr = 0;
+  termInLatch = 0; termReady = 0;
+  resetCPU();
+}
+
+
+/* ======================================================================
+   ASSEMBLER
+   Two-pass assembler for RETRO-32 assembly source.
+   Directives: .org .byte .word .dword .str
+   Labels must be on their own line, ending in ':'.
+   ====================================================================== */
+
+function assemble(source){
+  const lines = source.split('\n');
+  const labels = {};
+  let addr = ORIGIN;
+  const parsed = [];
+
+  for(let i=0;i<lines.length;i++){
+    const lineNo = i+1;
+    let line = lines[i].split(';')[0].trim();
+    if(!line) continue;
+    if(line.endsWith(':')){
+      const label = line.slice(0,-1).trim();
+      if(!label) throw new AsmError('Empty label', lineNo);
+      labels[label] = addr;
+      continue;
+    }
+    const m = /^(\S+)\s*(.*)$/.exec(line);
+    if(!m) continue;
+    const mnem = m[1].toUpperCase();
+    const rest = m[2].trim();
+
+    if(mnem === '.ORG'){ addr = resolveVal(rest, labels, lineNo); parsed.push({type:'org', addr:addr, lineNo}); continue; }
+    if(mnem === '.BYTE'){ const n = splitOperands(rest).length; parsed.push({type:'bytes', addr, raw:rest, lineNo}); addr += n; continue; }
+    if(mnem === '.WORD'){ const n = splitOperands(rest).length; parsed.push({type:'words', addr, raw:rest, lineNo}); addr += n*2; continue; }
+    if(mnem === '.DWORD'){ const n = splitOperands(rest).length; parsed.push({type:'dwords', addr, raw:rest, lineNo}); addr += n*4; continue; }
+    if(mnem === '.STR'){ const str = parseStringLiteral(rest, lineNo); parsed.push({type:'str', addr, str, lineNo}); addr += str.length+1; continue; }
+    if(mnem === '.ALIGN4'){ if(addr % 4 !== 0) addr += 4 - (addr % 4); parsed.push({type:'org', addr, lineNo}); continue; }
+
+    if(!OPS[mnem]) throw new AsmError('Unknown mnemonic or directive "'+mnem+'"', lineNo);
+    parsed.push({type:'instr', addr, mnem, operands:rest, lineNo, raw:line});
+    addr += 4;
+  }
+
+  const size = Math.max(addr - ORIGIN, 0);
+  const buf = new Uint8Array(size);
+  function put(a, val){
+    const off = a - ORIGIN;
+    if(off < 0 || off >= buf.length) throw new AsmError('Address 0x'+hex(a,4)+' is out of assembled range', 0);
+    buf[off] = val & 0xFF;
+  }
+
+  for(const p of parsed){
+    if(p.type === 'org') continue;
+    if(p.type === 'bytes'){
+      const vals = splitOperands(p.raw).map(function(v){ return resolveVal(v, labels, p.lineNo); });
+      vals.forEach(function(v,i){ put(p.addr+i, v); });
+      continue;
+    }
+    if(p.type === 'words'){
+      const vals = splitOperands(p.raw).map(function(v){ return resolveVal(v, labels, p.lineNo); });
+      vals.forEach(function(v,i){ put(p.addr+i*2, (v>>8)&0xFF); put(p.addr+i*2+1, v&0xFF); });
+      continue;
+    }
+    if(p.type === 'dwords'){
+      const vals = splitOperands(p.raw).map(function(v){ return resolveVal(v, labels, p.lineNo); });
+      vals.forEach(function(v,i){
+        put(p.addr+i*4, (v>>>24)&0xFF); put(p.addr+i*4+1, (v>>>16)&0xFF);
+        put(p.addr+i*4+2, (v>>>8)&0xFF); put(p.addr+i*4+3, v&0xFF);
+      });
+      continue;
+    }
+    if(p.type === 'str'){
+      for(let i=0;i<p.str.length;i++) put(p.addr+i, p.str.charCodeAt(i));
+      put(p.addr + p.str.length, 0);
+      continue;
+    }
+    if(p.type === 'instr'){
+      encodeInstr(p, labels, put);
+      continue;
+    }
+  }
+
+  return {bytes:buf, origin:ORIGIN, size:buf.length, labels};
+}
+
+function AsmError(msg, lineNo){
+  this.message = (lineNo ? ('Line '+lineNo+': ') : '') + msg;
+}
+AsmError.prototype = Object.create(Error.prototype);
+
+function splitOperands(str){
+  return str.split(',').map(function(s){ return s.trim(); }).filter(function(s){ return s.length>0; });
+}
+
+function parseReg(tok, lineNo){
+  const m = /^R([0-7])$/i.exec(tok.trim());
+  if(!m) throw new AsmError('Expected register R0-R7, got "'+tok+'"', lineNo);
+  return parseInt(m[1],10);
+}
+
+function resolveVal(tok, labels, lineNo){
+  tok = tok.trim();
+  if(Object.prototype.hasOwnProperty.call(labels, tok)) return labels[tok] & 0xFFFF;
+  let m;
+  if((m = /^0x([0-9a-f]+)$/i.exec(tok))) return parseInt(m[1],16);
+  if((m = /^-?\d+$/.exec(tok))) return parseInt(tok,10);
+  if((m = /^'(\\.|[^'\\])'$/.exec(tok))) return charLiteral(m[1]);
+  throw new AsmError('Cannot resolve value or label "'+tok+'"', lineNo);
+}
+
+function charLiteral(c){
+  if(c.length===1) return c.charCodeAt(0);
+  switch(c){
+    case '\\n': return 10;
+    case '\\t': return 9;
+    case '\\0': return 0;
+    case '\\\\': return 92;
+    case "\\'": return 39;
+    default: return c.charCodeAt(c.length-1);
+  }
+}
+
+function parseStringLiteral(rest, lineNo){
+  const m = /^"((?:[^"\\]|\\.)*)"/.exec(rest.trim());
+  if(!m) throw new AsmError('Invalid .str literal: '+rest, lineNo);
+  const raw = m[1];
+  let out = '';
+  for(let i=0;i<raw.length;i++){
+    if(raw[i] === '\\' && i+1 < raw.length){
+      const n = raw[i+1];
+      if(n==='n'){ out+='\n'; i++; }
+      else if(n==='t'){ out+='\t'; i++; }
+      else if(n==='0'){ out+='\0'; i++; }
+      else if(n==='\\'){ out+='\\'; i++; }
+      else if(n==='"'){ out+='"'; i++; }
+      else { out+=n; i++; }
+    } else out += raw[i];
+  }
+  return out;
+}
+
+function bracket(tok, lineNo){
+  const m = /^\[(.+)\]$/.exec(tok.trim());
+  if(!m) throw new AsmError('Expected [ ... ], got "'+tok+'"', lineNo);
+  return m[1];
+}
+
+function parseRbOff(tok, labels, lineNo){
+  const inner = bracket(tok, lineNo).trim();
+  const m = /^R([0-7])\s*(?:([+-])\s*(0x[0-9a-f]+|\d+))?$/i.exec(inner);
+  if(!m) throw new AsmError('Expected [Rn+off], got "'+tok+'"', lineNo);
+  const rb = parseInt(m[1],10);
+  let off = 0;
+  if(m[3]){
+    off = /^0x/i.test(m[3]) ? parseInt(m[3],16) : parseInt(m[3],10);
+    if(m[2] === '-') off = -off;
+  }
+  return {rb:rb, off:off};
+}
+
+function encodeInstr(p, labels, put){
+  const info = OPS[p.mnem];
+  const ops = splitOperands(p.operands);
+  let A=0,B=0,C=0;
+  const need = function(i){
+    if(ops[i]===undefined) throw new AsmError('Missing operand for '+p.mnem+' (expected: '+info.syntax+')', p.lineNo);
+    return ops[i];
+  };
+  switch(info.form){
+    case 'NONE': break;
+    case 'R': A = parseReg(need(0), p.lineNo); break;
+    case 'RR': A = parseReg(need(0), p.lineNo); B = parseReg(need(1), p.lineNo); break;
+    case 'RRR': A = parseReg(need(0), p.lineNo); B = parseReg(need(1), p.lineNo); C = parseReg(need(2), p.lineNo); break;
+    case 'RR,IMM8': case 'RR,IMM8S':
+      A = parseReg(need(0), p.lineNo); B = parseReg(need(1), p.lineNo);
+      C = resolveVal(need(2), labels, p.lineNo) & 0xFF;
+      break;
+    case 'R,IMM16': {
+      A = parseReg(need(0), p.lineNo);
+      const v = resolveVal(need(1), labels, p.lineNo);
+      B = (v>>8)&0xFF; C = v&0xFF;
+      break;
+    }
+    case 'R,IMM8':
+      A = parseReg(need(0), p.lineNo); B = resolveVal(need(1), labels, p.lineNo) & 0xFF;
+      break;
+    case 'IMM8,R':
+      A = resolveVal(need(0), labels, p.lineNo) & 0xFF; B = parseReg(need(1), p.lineNo);
+      break;
+    case 'IMM8':
+      A = resolveVal(need(0), labels, p.lineNo) & 0xFF;
+      break;
+    case 'ADDR16': {
+      const v = resolveVal(need(0), labels, p.lineNo);
+      B = (v>>8)&0xFF; C = v&0xFF;
+      break;
+    }
+    case 'R,ADDR16': {
+      A = parseReg(need(0), p.lineNo);
+      const v = resolveVal(bracket(need(1), p.lineNo), labels, p.lineNo);
+      B = (v>>8)&0xFF; C = v&0xFF;
+      break;
+    }
+    case 'ADDR16,R': {
+      const v = resolveVal(bracket(need(0), p.lineNo), labels, p.lineNo);
+      B = (v>>8)&0xFF; C = v&0xFF;
+      A = parseReg(need(1), p.lineNo);
+      break;
+    }
+    case 'R,RBOFF': {
+      A = parseReg(need(0), p.lineNo);
+      const o = parseRbOff(need(1), labels, p.lineNo);
+      B = o.rb; C = o.off & 0xFF;
+      break;
+    }
+    case 'RBOFF,R': {
+      const o = parseRbOff(need(0), labels, p.lineNo);
+      B = o.rb; C = o.off & 0xFF;
+      A = parseReg(need(1), p.lineNo);
+      break;
+    }
+    default: throw new AsmError('Internal: unknown form for '+p.mnem, p.lineNo);
+  }
+  put(p.addr, info.code);
+  put(p.addr+1, A);
+  put(p.addr+2, B);
+  put(p.addr+3, C);
+}
+
+
+/* ======================================================================
+   CARTRIDGES
+   ====================================================================== */
+
+const DEFAULT_TEMPLATE =
+"; ============================================\n"+
+"; RETRO-32 -- no cartridge inserted\n"+
+"; Write a program below, then press\n"+
+"; ASSEMBLE & LOAD to run it.\n"+
+";\n"+
+"; Registers : R0-R7 (32-bit)\n"+
+"; Origin    : 0x0080\n"+
+"; Open the MANUAL for the full instruction\n"+
+"; set, memory map and I/O port reference.\n"+
+"; ============================================\n"+
+"        MOVI R0, 42\n"+
+"        MOVI R1, 8\n"+
+"        ADD  R2, R0, R1\n"+
+"        OUT  0x00, R2      ; show R2 on the output LEDs\n"+
+"        HALT\n";
+
+const CARTRIDGES = [
+{
+  id:0, name:'BINARY COUNTER', code:'LEDCTR',
+  desc:'Counts 0-255 in binary on the output LEDs, forever.',
+  source:
+"; ============================================\n"+
+"; CARTRIDGE 0 : BINARY COUNTER\n"+
+"; Counts 0-255 in binary on the OUTPUT LEDs.\n"+
+"; ============================================\n"+
+"        MOVI R0, 0\n"+
+"        MOVI R6, 0xFF        ; wrap mask\n"+
+"LOOP:\n"+
+"        OUT  0x00, R0\n"+
+"        CALL DELAY\n"+
+"        INC  R0\n"+
+"        AND  R0, R0, R6      ; keep R0 within 0-255\n"+
+"        JMP  LOOP\n"+
+"\n"+
+"DELAY:\n"+
+"        MOVI R1, 0\n"+
+"DWAIT:\n"+
+"        INC  R1\n"+
+"        CMPI R1, 40\n"+
+"        JNZ  DWAIT\n"+
+"        RET\n"
+},
+{
+  id:1, name:'TERMINAL DEMO', code:'TERMIO',
+  desc:'Prints a welcome banner, then echoes your keystrokes back to the screen.',
+  source:
+"; ============================================\n"+
+"; CARTRIDGE 1 : TERMINAL DEMO\n"+
+"; Prints a welcome banner, then echoes keys\n"+
+"; you type back to the screen.\n"+
+"; ============================================\n"+
+"        MOVI R0, MSG\n"+
+"PRINT:\n"+
+"        LDRB R1, [R0+0]\n"+
+"        CMPI R1, 0\n"+
+"        JZ   ECHO\n"+
+"        OUT  0x02, R1\n"+
+"        INC  R0\n"+
+"        JMP  PRINT\n"+
+"\n"+
+"ECHO:\n"+
+"        IN   R2, 0x04        ; TERM_STATUS\n"+
+"        MOVI R3, 1\n"+
+"        AND  R2, R2, R3      ; isolate key-ready bit\n"+
+"        CMPI R2, 0\n"+
+"        JZ   ECHO            ; poll until a key is ready\n"+
+"        IN   R1, 0x03        ; TERM_IN\n"+
+"        OUT  0x02, R1        ; echo it\n"+
+"        JMP  ECHO\n"+
+"\n"+
+"MSG:\n"+
+"        .str \"RETRO-32 TERMINAL ONLINE.\\nTYPE SOMETHING - I WILL ECHO IT BACK.\\n\\n\"\n"
+},
+{
+  id:2, name:'FIBONACCI', code:'FIBSEQ',
+  desc:'Computes and prints the first 12 Fibonacci numbers as two-digit hex values.',
+  source:
+"; ============================================\n"+
+"; CARTRIDGE 2 : FIBONACCI\n"+
+"; Prints the first 12 Fibonacci numbers as\n"+
+"; two-digit hex values, space separated.\n"+
+"; ============================================\n"+
+"        MOVI R0, 0            ; a\n"+
+"        MOVI R1, 1            ; b\n"+
+"        MOVI R4, 12           ; remaining terms\n"+
+"FIBLOOP:\n"+
+"        MOV  R2, R0\n"+
+"        CALL PRINTHEX\n"+
+"        MOVI R2, 0x20\n"+
+"        OUT  0x02, R2\n"+
+"        MOV  R5, R0\n"+
+"        MOV  R0, R1\n"+
+"        ADD  R1, R1, R5\n"+
+"        DEC  R4\n"+
+"        CMPI R4, 0\n"+
+"        JNZ  FIBLOOP\n"+
+"        MOVI R2, 0x0A\n"+
+"        OUT  0x02, R2\n"+
+"        HALT\n"+
+"\n"+
+"; -- Subroutine: print byte in R2 as 2 hex digits. Clobbers R3,R6,R7.\n"+
+"PRINTHEX:\n"+
+"        MOV  R3, R2\n"+
+"        SHR  R3, R3, 4\n"+
+"        MOVI R7, 0x0F\n"+
+"        AND  R3, R3, R7\n"+
+"        CALL NIBBLE\n"+
+"        MOV  R3, R2\n"+
+"        MOVI R7, 0x0F\n"+
+"        AND  R3, R3, R7\n"+
+"        CALL NIBBLE\n"+
+"        RET\n"+
+"\n"+
+"; -- Subroutine: print low nibble of R3 as a hex ASCII char. Clobbers R6.\n"+
+"NIBBLE:\n"+
+"        CMPI R3, 10\n"+
+"        JNC  ALPHA\n"+
+"        ADDI R6, R3, 0x30\n"+
+"        JMP  NIBOUT\n"+
+"ALPHA:\n"+
+"        ADDI R6, R3, 0x37\n"+
+"NIBOUT:\n"+
+"        OUT  0x02, R6\n"+
+"        RET\n"
+},
+{
+  id:3, name:'SSD SELF-TEST', code:'SSDCHK',
+  desc:'Writes a pattern into the fantasy SSD, reads it back, and reports PASS or FAIL.',
+  source:
+"; ============================================\n"+
+"; CARTRIDGE 3 : SSD SELF-TEST\n"+
+"; Writes a pattern into the fantasy SSD, reads\n"+
+"; it back, and reports PASS or FAIL.\n"+
+"; ============================================\n"+
+"        MOVI R0, 0\n"+
+"        MOVI R4, 16\n"+
+"WRITELOOP:\n"+
+"        MOV  R1, R0\n"+
+"        MOVI R2, 3\n"+
+"        MUL  R1, R1, R2\n"+
+"        ADDI R1, R1, 7       ; pattern = addr*3+7\n"+
+"        OUT  0x0A, R0        ; STORAGE_ADDR\n"+
+"        OUT  0x0B, R1        ; STORAGE_DATA (write)\n"+
+"        INC  R0\n"+
+"        DEC  R4\n"+
+"        CMPI R4, 0\n"+
+"        JNZ  WRITELOOP\n"+
+"\n"+
+"        MOVI R0, 0\n"+
+"        MOVI R4, 16\n"+
+"        MOVI R5, 0            ; mismatch count\n"+
+"READLOOP:\n"+
+"        MOV  R1, R0\n"+
+"        MOVI R2, 3\n"+
+"        MUL  R1, R1, R2\n"+
+"        ADDI R1, R1, 7\n"+
+"        OUT  0x0A, R0\n"+
+"        IN   R3, 0x0B         ; read back\n"+
+"        CMP  R3, R1\n"+
+"        JZ   MATCHOK\n"+
+"        INC  R5\n"+
+"MATCHOK:\n"+
+"        INC  R0\n"+
+"        DEC  R4\n"+
+"        CMPI R4, 0\n"+
+"        JNZ  READLOOP\n"+
+"\n"+
+"        CMPI R5, 0\n"+
+"        JZ   PASS\n"+
+"        MOVI R0, FAILMSG\n"+
+"        JMP  PRINTLOOP\n"+
+"PASS:\n"+
+"        MOVI R0, PASSMSG\n"+
+"PRINTLOOP:\n"+
+"        LDRB R1, [R0+0]\n"+
+"        CMPI R1, 0\n"+
+"        JZ   FIN\n"+
+"        OUT  0x02, R1\n"+
+"        INC  R0\n"+
+"        JMP  PRINTLOOP\n"+
+"FIN:\n"+
+"        HALT\n"+
+"\n"+
+"PASSMSG:\n"+
+"        .str \"SSD SELF-TEST: PASS\\n\"\n"+
+"FAILMSG:\n"+
+"        .str \"SSD SELF-TEST: FAIL\\n\"\n"
+}
+];
+
+
+/* ======================================================================
+   UI STATE
+   ====================================================================== */
+
+let powered = false;
+let running = false;
+let runHandle = null;
+let timerIrqEnabled = false;
+let activeCart = null; // index into CARTRIDGES, or null
+
+const CLOCK_STEPS = [1,2,4,8,16,32,64,128,256,512,'MAX'];
+let clockIndex = 4; // 16 Hz default
+
+const switchState = {
+  addr: new Array(16).fill(false),
+  data: new Array(8).fill(false),
+  io:   new Array(8).fill(false)
+};
+
+/* ---------------- element refs ---------------- */
+const el = {};
+['chassis','powerRocker','manualBtn','manualOverlay','manualCloseBtn','manualContent',
+ 'cartBay','ejectBtn','cartStatus','cartIdReadout',
+ 'addrLeds','dataLeds','addrSwitches','dataSwitches',
+ 'examineBtn','examineNextBtn','depositBtn','depositNextBtn',
+ 'runStopBtn','stepBtn','resetBtn','clockKnob','cyclesReadout',
+ 'ledHalt','ledRun','flagZ','flagC','flagN','disasmLine','regGrid',
+ 'termScreen','ledOut','ioSwitches','ledStorage',
+ 'editor','assembleBtn','asmStatus'
+].forEach(function(id){ el[id] = document.getElementById(id); });
+
+let switchAddr = 0, switchData = 0;
+
+/* ---------------- LED / switch builders ---------------- */
+function buildLeds(container, count, color){
+  container.innerHTML = '';
+  const cells = [];
+  for(let i=count-1;i>=0;i--){
+    const cell = document.createElement('div');
+    cell.className = 'led-cell';
+    const led = document.createElement('div');
+    led.className = 'led '+color;
+    const bit = document.createElement('div');
+    bit.className = 'led-bit';
+    bit.textContent = i;
+    cell.appendChild(led);
+    cell.appendChild(bit);
+    container.appendChild(cell);
+    cells[i] = led;
+  }
+  return cells;
+}
+function setLeds(cells, value){
+  for(let i=0;i<cells.length;i++){
+    if(cells[i]) cells[i].classList.toggle('on', ((value >>> i) & 1) === 1);
+  }
+}
+
+function buildSwitches(container, count, stateArr, onChange){
+  container.innerHTML = '';
+  const cells = [];
+  for(let i=count-1;i>=0;i--){
+    const cell = document.createElement('div');
+    cell.className = 'switch-cell';
+    const sw = document.createElement('div');
+    sw.className = 'toggle-switch';
+    sw.tabIndex = 0;
+    sw.setAttribute('role','switch');
+    sw.setAttribute('aria-checked','false');
+    const lever = document.createElement('div');
+    lever.className = 'lever';
+    sw.appendChild(lever);
+    const label = document.createElement('div');
+    label.className = 'bit-label';
+    label.textContent = i;
+    cell.appendChild(sw);
+    cell.appendChild(label);
+    container.appendChild(cell);
+    (function(idx, node){
+      function toggle(){
+        stateArr[idx] = !stateArr[idx];
+        node.classList.toggle('up', stateArr[idx]);
+        node.setAttribute('aria-checked', String(stateArr[idx]));
+        onChange();
+      }
+      node.addEventListener('click', toggle);
+      node.addEventListener('keydown', function(e){
+        if(e.key===' '||e.key==='Enter'){ e.preventDefault(); toggle(); }
+      });
+    })(i, sw);
+    cells[i] = sw;
+  }
+  return cells;
+}
+function setSwitchesValue(cells, stateArr, value){
+  for(let i=0;i<stateArr.length;i++){
+    stateArr[i] = ((value >>> i) & 1) === 1;
+    if(cells[i]) cells[i].classList.toggle('up', stateArr[i]);
+  }
+}
+function readSwitchesValue(stateArr){
+  let v = 0;
+  for(let i=0;i<stateArr.length;i++) if(stateArr[i]) v |= (1<<i);
+  return v >>> 0;
+}
+
+const addrLedCells = buildLeds(el.addrLeds, 16, 'red');
+const dataLedCells = buildLeds(el.dataLeds, 8, 'amber');
+const ledOutCells  = buildLeds(el.ledOut, 8, 'green');
+const addrSwCells  = buildSwitches(el.addrSwitches, 16, switchState.addr, function(){ switchAddr = readSwitchesValue(switchState.addr); });
+const dataSwCells  = buildSwitches(el.dataSwitches, 8, switchState.data, function(){ switchData = readSwitchesValue(switchState.data); });
+const ioSwCells    = buildSwitches(el.ioSwitches, 8, switchState.io, function(){ switchInVal = readSwitchesValue(switchState.io); });
+
+/* ---------------- register grid ---------------- */
+const regCellEls = {};
+(function buildRegGrid(){
+  const names = ['R0','R1','R2','R3','R4','R5','R6','R7','PC','SP'];
+  names.forEach(function(n){
+    const cell = document.createElement('div');
+    cell.className = 'reg-cell';
+    const label = document.createElement('div');
+    label.className = 'reg-name'; label.textContent = n;
+    const val = document.createElement('div');
+    val.className = 'reg-val'; val.textContent = '00000000';
+    cell.appendChild(label); cell.appendChild(val);
+    el.regGrid.appendChild(cell);
+    regCellEls[n] = val;
+  });
+})();
+
+/* ---------------- clock knob ---------------- */
+const clockBtns = [];
+CLOCK_STEPS.forEach(function(step, i){
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'knob-pos';
+  btn.textContent = (step==='MAX') ? 'MAX' : (step+'Hz');
+  btn.addEventListener('click', function(){
+    clockIndex = i;
+    clockBtns.forEach(function(b,j){ b.classList.toggle('active', j===i); });
+    if(running) scheduleRun();
+  });
+  el.clockKnob.appendChild(btn);
+  clockBtns.push(btn);
+});
+clockBtns[clockIndex].classList.add('active');
+
+/* ---------------- terminal ---------------- */
+let termBuffer = '';
+function renderTerminal(){
+  el.termScreen.textContent = termBuffer;
+  const cur = document.createElement('span');
+  cur.className = 'term-cursor';
+  el.termScreen.appendChild(cur);
+  el.termScreen.scrollTop = el.termScreen.scrollHeight;
+}
+function termPrintChar(code){
+  if(code === 7){ // bell
+    el.chassis.style.boxShadow = '0 0 0 3px rgba(255,59,48,.5)';
+    setTimeout(function(){ el.chassis.style.boxShadow=''; }, 120);
+    return;
+  }
+  if(code === 8){ termBuffer = termBuffer.slice(0,-1); renderTerminal(); return; }
+  termBuffer += String.fromCharCode(code);
+  if(termBuffer.length > 6000) termBuffer = termBuffer.slice(-6000);
+  renderTerminal();
+}
+function termClear(){ termBuffer=''; renderTerminal(); }
+renderTerminal();
+
+el.termScreen.addEventListener('click', function(){ el.termScreen.focus(); });
+el.termScreen.addEventListener('focus', function(){ el.termScreen.classList.add('focused'); });
+el.termScreen.addEventListener('blur', function(){ el.termScreen.classList.remove('focused'); });
+el.termScreen.addEventListener('keydown', function(e){
+  if(!powered) return;
+  let code = null;
+  if(e.key === 'Enter'){ code = 10; }
+  else if(e.key === 'Backspace'){ code = 8; }
+  else if(e.key === 'Tab'){ code = 32; }
+  else if(e.key.length === 1){ code = e.key.charCodeAt(0); }
+  if(code !== null){
+    e.preventDefault();
+    termInLatch = code & 0xFF;
+    termReady = 1;
+  }
+});
+
+/* ---------------- cartridge bay ---------------- */
+CARTRIDGES.forEach(function(cart, idx){
+  const slot = document.createElement('div');
+  slot.className = 'cart-slot';
+  slot.tabIndex = 0;
+  slot.setAttribute('role','button');
+  slot.innerHTML =
+    '<div class="cart-led"></div>'+
+    '<div class="cart-name">'+cart.name+'</div>'+
+    '<div class="cart-code">CART.'+cart.code+'</div>'+
+    '<div class="cart-desc">'+cart.desc+'</div>';
+  function activate(){ insertCartridge(idx); }
+  slot.addEventListener('click', activate);
+  slot.addEventListener('keydown', function(e){ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); activate(); } });
+  el.cartBay.appendChild(slot);
+  cart._slotEl = slot;
+});
+
+function insertCartridge(idx){
+  if(!powered) return;
+  activeCart = idx;
+  window.__retro32_cartId = CARTRIDGES[idx].id;
+  CARTRIDGES.forEach(function(c,i){ c._slotEl.classList.toggle('active', i===idx); });
+  el.cartStatus.textContent = CARTRIDGES[idx].name;
+  el.cartIdReadout.textContent = 'CART: 0x'+hex(CARTRIDGES[idx].id,2);
+  el.editor.value = CARTRIDGES[idx].source;
+  stopRun();
+  const ok = doAssemble(CARTRIDGES[idx].source, {silentSuccess:true});
+  if(ok){
+    resetCPU();
+    startRun();
+  }
+}
+function ejectCartridge(){
+  if(!powered) return;
+  activeCart = null;
+  window.__retro32_cartId = 0xFF;
+  CARTRIDGES.forEach(function(c){ c._slotEl.classList.remove('active'); });
+  el.cartStatus.textContent = '\u2014 none \u2014';
+  el.cartIdReadout.textContent = 'CART: \u2014';
+  stopRun();
+  hardReset();
+  el.editor.value = DEFAULT_TEMPLATE;
+  refreshUI();
+  setAsmStatus('Machine blanked. Ready.', 'ok');
+}
+el.ejectBtn.addEventListener('click', ejectCartridge);
+
+/* ---------------- assemble & load ---------------- */
+function setAsmStatus(msg, cls){
+  el.asmStatus.textContent = msg;
+  el.asmStatus.className = cls || '';
+}
+function doAssemble(source, opts){
+  opts = opts || {};
+  try{
+    const result = assemble(source);
+    mem.fill(0, ORIGIN, 0xF000);
+    for(let i=0;i<result.bytes.length;i++) mem[ORIGIN+i] = result.bytes[i];
+    if(!opts.silentSuccess) setAsmStatus('Assembled '+result.size+' bytes OK.', 'ok');
+    else setAsmStatus('Cartridge loaded ('+result.size+' bytes).', 'ok');
+    return true;
+  }catch(err){
+    setAsmStatus((err && err.message) ? err.message : String(err), 'err');
+    return false;
+  }
+}
+el.assembleBtn.addEventListener('click', function(){
+  if(!powered) return;
+  stopRun();
+  const ok = doAssemble(el.editor.value, {silentSuccess:false});
+  if(ok){
+    resetCPU();
+    refreshUI();
+  }
+});
+el.editor.value = DEFAULT_TEMPLATE;
+
+/* ---------------- front panel: examine / deposit ---------------- */
+el.examineBtn.addEventListener('click', function(){
+  if(!powered) return;
+  readByte(switchAddr);
+  refreshUI();
+});
+el.examineNextBtn.addEventListener('click', function(){
+  if(!powered) return;
+  switchAddr = (switchAddr+1) & 0xFFFF;
+  setSwitchesValue(addrSwCells, switchState.addr, switchAddr);
+  readByte(switchAddr);
+  refreshUI();
+});
+el.depositBtn.addEventListener('click', function(){
+  if(!powered) return;
+  writeByte(switchAddr, switchData);
+  refreshUI();
+});
+el.depositNextBtn.addEventListener('click', function(){
+  if(!powered) return;
+  switchAddr = (switchAddr+1) & 0xFFFF;
+  setSwitchesValue(addrSwCells, switchState.addr, switchAddr);
+  writeByte(switchAddr, switchData);
+  refreshUI();
+});
+
+/* ---------------- run control ---------------- */
+function stopRun(){
+  running = false;
+  if(runHandle !== null){
+    clearInterval(runHandle);
+    cancelAnimationFrame(runHandle);
+    runHandle = null;
+  }
+  updateRunButtons();
+}
+function startRun(){
+  if(!powered || halted) { updateRunButtons(); return; }
+  running = true;
+  updateRunButtons();
+  scheduleRun();
+}
+function scheduleRun(){
+  if(runHandle !== null){ clearInterval(runHandle); cancelAnimationFrame(runHandle); runHandle = null; }
+  if(!running) return;
+  const rate = CLOCK_STEPS[clockIndex];
+  if(rate === 'MAX'){
+    const loop = function(){
+      if(!running) return;
+      const start = performance.now();
+      while(performance.now() - start < 12){ if(!cpuStep()) break; }
+      refreshUI();
+      if(halted){ stopRun(); return; }
+      runHandle = requestAnimationFrame(loop);
+    };
+    runHandle = requestAnimationFrame(loop);
+  } else {
+    const intervalMs = Math.max(1, Math.round(1000/rate));
+    const stepsPerTick = Math.max(1, Math.round(rate/1000));
+    runHandle = setInterval(function(){
+      for(let i=0;i<stepsPerTick;i++){ if(!cpuStep()) break; }
+      refreshUI();
+      if(halted) stopRun();
+    }, intervalMs);
+  }
+}
+el.runStopBtn.addEventListener('click', function(){
+  if(!powered) return;
+  if(running) stopRun(); else startRun();
+});
+el.stepBtn.addEventListener('click', function(){
+  if(!powered || running) return;
+  cpuStep();
+  refreshUI();
+});
+el.resetBtn.addEventListener('click', function(){
+  if(!powered) return;
+  stopRun();
+  resetCPU();
+  refreshUI();
+});
+function updateRunButtons(){
+  el.runStopBtn.textContent = running ? 'Stop' : 'Run';
+  el.runStopBtn.classList.toggle('danger-on', running);
+  el.stepBtn.disabled = running;
+}
+
+/* ---------------- power ---------------- */
+function setPower(on){
+  powered = on;
+  el.powerRocker.classList.toggle('on', on);
+  el.powerRocker.setAttribute('aria-checked', String(on));
+  el.chassis.classList.toggle('powered-off', !on);
+  if(on){
+    hardReset();
+    window.__retro32_cartId = 0xFF;
+    if(activeCart !== null){
+      const idx = activeCart;
+      doAssemble(CARTRIDGES[idx].source, {silentSuccess:true});
+      window.__retro32_cartId = CARTRIDGES[idx].id;
+    } else {
+      if(!el.editor.value.trim()) el.editor.value = DEFAULT_TEMPLATE;
+      doAssemble(el.editor.value, {silentSuccess:true});
+    }
+    refreshUI();
+  } else {
+    stopRun();
+  }
+  refreshUI();
+}
+el.powerRocker.addEventListener('click', function(){ setPower(!powered); });
+el.powerRocker.addEventListener('keydown', function(e){ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); setPower(!powered); } });
+
+/* ---------------- refresh loop ---------------- */
+function refreshUI(){
+  setLeds(addrLedCells, busAddress);
+  setLeds(dataLedCells, busData);
+  setLeds(ledOutCells, ledOutVal);
+  el.ledHalt.classList.toggle('on', halted);
+  el.ledRun.classList.toggle('on', running);
+  el.flagZ.classList.toggle('on', !!flags.Z);
+  el.flagC.classList.toggle('on', !!flags.C);
+  el.flagN.classList.toggle('on', !!flags.N);
+  regCellEls.R0.textContent = hex(regs[0],8);
+  regCellEls.R1.textContent = hex(regs[1],8);
+  regCellEls.R2.textContent = hex(regs[2],8);
+  regCellEls.R3.textContent = hex(regs[3],8);
+  regCellEls.R4.textContent = hex(regs[4],8);
+  regCellEls.R5.textContent = hex(regs[5],8);
+  regCellEls.R6.textContent = hex(regs[6],8);
+  regCellEls.R7.textContent = hex(regs[7],8);
+  regCellEls.PC.textContent = hex(pc & 0xFFFF, 4);
+  regCellEls.SP.textContent = hex(sp & 0xFFFF, 4);
+  el.cyclesReadout.textContent = cycles + ' cycles';
+  el.disasmLine.textContent = 'NEXT @ 0x'+hex(pc & 0xFFFF,4)+' :  '+disassemble(pc);
+  if(lastStorageActivity > 0){
+    lastStorageActivity--;
+    el.ledStorage.classList.add('on');
+  } else {
+    el.ledStorage.classList.remove('on');
+  }
+}
+setInterval(function(){ if(!running) refreshUI(); }, 250); // idle refresh (storage LED decay, disasm line, etc.)
+refreshUI();
+
+/* ---------------- manual toggle ---------------- */
+el.manualBtn.addEventListener('click', function(){ el.manualOverlay.classList.add('open'); });
+el.manualCloseBtn.addEventListener('click', function(){ el.manualOverlay.classList.remove('open'); });
+el.manualOverlay.addEventListener('click', function(e){ if(e.target === el.manualOverlay) el.manualOverlay.classList.remove('open'); });
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') el.manualOverlay.classList.remove('open'); });
+
+
+/* ======================================================================
+   MANUAL CONTENT (generated from the OPS table so it can never drift
+   out of sync with the actual instruction set implemented above)
+   ====================================================================== */
+
+function buildManual(){
+  let isaRows = '';
+  Object.keys(OPS).sort(function(a,b){ return OPS[a].code - OPS[b].code; }).forEach(function(mnem){
+    const info = OPS[mnem];
+    isaRows += '<tr><td>0x'+hex(info.code,2)+'</td><td><code>'+info.syntax+'</code></td><td>'+info.desc+'</td></tr>';
+  });
+
+  let cartRows = '';
+  CARTRIDGES.forEach(function(c){
+    cartRows += '<tr><td>0x'+hex(c.id,2)+'</td><td>'+c.name+'</td><td>'+c.desc+'</td></tr>';
+  });
+
+  el.manualContent.innerHTML =
+'<h2>RETRO-32 System Manual</h2>'+
+'<p>The RETRO-32 is a fantasy 32-bit computer: eight 32-bit general-purpose '+
+'registers, a 64&nbsp;KB byte-addressable memory, and a fixed 4-byte '+
+'instruction word. It runs from mechanical front-panel switches, a '+
+'built-in assembler, or a plug-in cartridge.</p>'+
+
+'<h3>1. Architecture Overview</h3>'+
+'<ul>'+
+'<li><b>Registers</b>: R0-R7, each 32-bit, general purpose.</li>'+
+'<li><b>PC</b> (Program Counter): address of the next instruction word. Instructions are 4 bytes and need not be aligned, though the assembler always emits 4-byte-aligned code.</li>'+
+'<li><b>SP</b> (Stack Pointer): initialised to 0xFFFC, grows downward, moves by 4 bytes per PUSH/POP/CALL/RET/INT/IRET.</li>'+
+'<li><b>Flags</b>: <code>Z</code> (zero), <code>C</code> (carry / unsigned borrow), <code>N</code> (result is negative, i.e. bit 31 set).</li>'+
+'<li><b>Interrupts</b>: 32-entry vector table at 0x0000-0x007F (4 bytes per vector; the low 2 bytes of each slot hold the handler address). <code>INT n</code> fires a software interrupt at any time; a hardware timer interrupt (vector 1) can be armed with the TIMER IRQ front-panel option once <code>EI</code> has run.</li>'+
+'</ul>'+
+
+'<h3>2. Memory Map</h3>'+
+'<table><tr><th>Range</th><th>Contents</th></tr>'+
+'<tr><td>0x0000&ndash;0x007F</td><td>Interrupt vector table (32 &times; 4 bytes)</td></tr>'+
+'<tr><td>0x0080&ndash;0xEFFF</td><td>RAM &mdash; program and data. Cartridges and assembled code load at 0x0080.</td></tr>'+
+'<tr><td>0xF000&ndash;0xF0FF</td><td>Memory-mapped I/O (see port table below) &mdash; readable/writable directly with LDB/STB or via IN/OUT.</td></tr>'+
+'<tr><td>0xF100&ndash;0xFFFF</td><td>Stack space (SP starts at 0xFFFC and grows down).</td></tr>'+
+'</table>'+
+
+'<h3>3. Complete Instruction Set (4-byte fixed encoding)</h3>'+
+'<p>Every instruction is encoded as <code>[OPCODE:8][A:8][B:8][C:8]</code>. '+
+'Jump/call targets and LDW/STW/LDB/STB addresses use B:C together as a 16-bit address. '+
+'MOVI uses B:C as a 16-bit immediate. Offsets in [Rb+off] forms are signed 8-bit.</p>'+
+'<table><tr><th>Opcode</th><th>Syntax</th><th>Effect</th></tr>'+isaRows+'</table>'+
+
+'<h3>4. I/O Port Map <small>(memory-mapped at 0xF000 + port)</small></h3>'+
+'<table><tr><th>Port</th><th>Name</th><th>Access</th><th>Description</th></tr>'+
+'<tr><td>0x00</td><td>LED_OUT</td><td>W</td><td>Drives the 8 output-port LEDs.</td></tr>'+
+'<tr><td>0x01</td><td>SWITCH_IN</td><td>R</td><td>Reflects the 8 input-port toggle switches.</td></tr>'+
+'<tr><td>0x02</td><td>TERM_OUT</td><td>W</td><td>Prints one ASCII byte to the terminal.</td></tr>'+
+'<tr><td>0x03</td><td>TERM_IN</td><td>R</td><td>Last key code typed; reading it clears the ready flag.</td></tr>'+
+'<tr><td>0x04</td><td>TERM_STATUS</td><td>R</td><td>Bit 0 = a key is ready to read.</td></tr>'+
+'<tr><td>0x05</td><td>TERM_CLEAR</td><td>W</td><td>Any write clears the terminal screen.</td></tr>'+
+'<tr><td>0x06</td><td>RNG</td><td>R</td><td>A fresh random byte on every read.</td></tr>'+
+'<tr><td>0x07 / 0x08</td><td>TIMER_HI / TIMER_LO</td><td>R</td><td>Free-running 16-bit cycle counter.</td></tr>'+
+'<tr><td>0x09</td><td>CART_ID</td><td>R</td><td>ID of the inserted cartridge, or 0xFF if none.</td></tr>'+
+'<tr><td>0x0A</td><td>STORAGE_ADDR</td><td>W</td><td>Selects a byte (0-255) on the fantasy SSD.</td></tr>'+
+'<tr><td>0x0B</td><td>STORAGE_DATA</td><td>R/W</td><td>Reads or writes the selected SSD byte.</td></tr>'+
+'</table>'+
+
+'<h3>5. Operating the Front Panel</h3>'+
+'<ol>'+
+'<li>Flip the <b>POWER</b> rocker on. This performs a full hardware reset and clears memory.</li>'+
+'<li>To hand-enter a byte: set its value on the 16 <b>address switches</b> and 8 <b>data switches</b>, then press <b>DEPOSIT</b>. <b>DEPOSIT NEXT</b> deposits and auto-advances the address by one, for entering a program byte by byte.</li>'+
+'<li><b>EXAMINE</b> reads the byte at the address switches onto the data bus LEDs; <b>EXAMINE NEXT</b> advances first.</li>'+
+'<li>The 16 red <b>address bus</b> LEDs and 8 amber <b>data bus</b> LEDs above the switches always show what the CPU (or the front panel) is actually reading or writing &mdash; watch them while the machine runs.</li>'+
+'<li>Press <b>RUN</b> to start the clock at the selected rate, <b>STOP</b> to halt it, or <b>STEP</b> to execute exactly one instruction while stopped.</li>'+
+'<li><b>RESET</b> restarts execution from 0x0080 without erasing memory. Powering off and back on erases memory entirely.</li>'+
+'</ol>'+
+
+'<h3>6. Cartridges</h3>'+
+'<p>Click a cartridge to insert, assemble and boot it automatically. Only one cartridge is active at a time; <b>EJECT</b> returns the machine to a blank state.</p>'+
+'<table><tr><th>ID</th><th>Title</th><th>Description</th></tr>'+cartRows+'</table>'+
+
+'<h3>7. Assembler Syntax</h3>'+
+'<p>One instruction, directive, or label per line. Labels stand alone on their own line and end with <code>:</code>. Comments start with <code>;</code>.</p>'+
+'<ul>'+
+'<li>Registers: <code>R0</code>&ndash;<code>R7</code>.</li>'+
+'<li>Numbers: decimal (<code>42</code>), hex (<code>0x2A</code>), or a character literal (<code>\'A\'</code>, supports <code>\\n \\t \\0 \\\\ \\\'</code>).</li>'+
+'<li>Memory operands: <code>[addr]</code> for direct addressing, <code>[Rn+off]</code> or <code>[Rn-off]</code> for register-indirect.</li>'+
+'<li><code>.org addr</code> &mdash; set the assembly address.</li>'+
+'<li><code>.byte a,b,c</code> / <code>.word a,b</code> / <code>.dword a</code> &mdash; emit raw data (1/2/4 bytes each, big-endian).</li>'+
+'<li><code>.str "text"</code> &mdash; emit ASCII bytes plus a trailing zero terminator.</li>'+
+'<li><code>.align4</code> &mdash; pad to the next 4-byte boundary.</li>'+
+'</ul>'+
+'<pre>        MOVI R0, 10        ; R0 = 10\n'+
+'        MOVI R1, 20        ; R1 = 20\n'+
+'        ADD  R2, R0, R1    ; R2 = R0 + R1\n'+
+'        OUT  0x00, R2      ; show R2 on the output LEDs\n'+
+'        HALT</pre>'+
+
+'<h3>8. Interrupts</h3>'+
+'<p><code>INT n</code> pushes the return address and a packed copy of the '+
+'Z/C/N flags onto the stack, disables further maskable interrupts, and jumps '+
+'to the address stored in vector <code>n</code> (at memory <code>n&times;4</code>, '+
+'low 2 bytes). The handler must end with <code>IRET</code>, which restores '+
+'flags and PC. <code>EI</code>/<code>DI</code> arm or disarm the optional '+
+'hardware timer interrupt (vector 1), which otherwise never fires on its own.</p>'+
+
+'<h3>9. Notes</h3>'+
+'<p>This is a fantasy machine: it favours a clean, learnable design over '+
+'strict historical accuracy. DIV/MOD by zero return 0 rather than faulting. '+
+'The fantasy SSD is volatile and clears on power-down. Have fun. &lt;3</p>';
+}
+buildManual();
+
+})();
+</script>
+</body>
+</html>
