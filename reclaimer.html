@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RECLAIMER-IX Terminal System</title>
+  <style>
+    :root {
+      --amber: #f8a100;
+      --amber-dim: #7a4e00;
+      --amber-glow: rgba(248, 161, 0, 0.4);
+      --crt-bg: #0d0800;
+      --panel-bg: #2a2c2b;
+      --metal-border: #4a4d4b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+    body {
+      background-color: #050505;
+      color: var(--amber);
+      font-family: 'Courier New', Courier, monospace;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    #app-container {
+      position: relative;
+      width: 1280px;
+      height: 720px;
+      background: #1e201f;
+      border: 12px solid #141514;
+      border-radius: 12px;
+      box-shadow: inset 0 0 40px #000, 0 20px 50px rgba(0,0,0,0.9);
+      display: grid;
+      grid-template-columns: 65% 35%;
+      grid-template-rows: 82% 18%;
+      padding: 16px;
+      gap: 16px;
+    }
+
+    #texture-canvas {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 10;
+      opacity: 0.55;
+      mix-blend-mode: overlay;
+    }
+
+    .crt-container {
+      grid-column: 1 / 2;
+      grid-row: 1 / 2;
+      background: var(--crt-bg);
+      border: 8px solid #111;
+      border-radius: 16px;
+      position: relative;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: inset 0 0 35px rgba(0,0,0,1), 0 0 10px rgba(0,0,0,0.8);
+      overflow: hidden;
+    }
+
+    .crt-container::before {
+      content: " ";
+      position: absolute;
+      top: 0; left: 0; bottom: 0; right: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+      background-size: 100% 3px, 6px 100%;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .crt-container::after {
+      content: " ";
+      position: absolute;
+      top: 0; left: 0; bottom: 0; right: 0;
+      background: radial-gradient(circle, rgba(0,0,0,0) 60%, rgba(0,0,0,0.8) 100%);
+      pointer-events: none;
+      z-index: 6;
+    }
+
+    .crt-header {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 2px solid var(--amber);
+      padding-bottom: 6px;
+      margin-bottom: 12px;
+      font-weight: bold;
+      font-size: 14px;
+      text-shadow: 0 0 6px var(--amber-glow);
+    }
+
+    .crt-screen-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      text-shadow: 0 0 5px var(--amber-glow);
+      font-size: 15px;
+      line-height: 1.4;
+      z-index: 2;
+    }
+
+    .hw-panel {
+      grid-column: 2 / 3;
+      grid-row: 1 / 3;
+      background: #252726;
+      border: 4px solid #161716;
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+      position: relative;
+    }
+
+    .hw-warning-tag {
+      background: #b52a1c;
+      color: #fff;
+      font-size: 10px;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 2px;
+      display: inline-block;
+      text-align: center;
+      border: 1px dashed #ff8888;
+      letter-spacing: 1px;
+    }
+
+    .hw-card {
+      background: #151716;
+      border: 2px solid #3a3d3b;
+      padding: 10px;
+      border-radius: 4px;
+      position: relative;
+    }
+
+    .hw-card-title {
+      font-size: 11px;
+      color: #8a8d8a;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+    }
+
+    .hw-card-value {
+      color: #61f205;
+      font-family: monospace;
+      font-weight: bold;
+      font-size: 13px;
+      text-shadow: 0 0 5px rgba(97, 242, 5, 0.4);
+    }
+
+    .pcb-visual {
+      height: 40px;
+      background: #113018;
+      border: 1px solid #1e5229;
+      margin-top: 6px;
+      border-radius: 3px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      gap: 6px;
+    }
+
+    .pcb-chip {
+      background: #222;
+      border: 1px solid #555;
+      height: 24px;
+      min-width: 30px;
+      border-radius: 2px;
+    }
+
+    .status-hud {
+      margin-top: auto;
+      background: #000;
+      border: 1px solid var(--amber-dim);
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .controls-panel {
+      grid-column: 1 / 2;
+      grid-row: 2 / 3;
+      background: #1a1c1b;
+      border: 3px solid #111;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 20px;
+    }
+
+    .btn-physical {
+      background: linear-gradient(145deg, #3d403e, #272827);
+      border: 2px solid #111;
+      color: #ccc;
+      padding: 12px 24px;
+      font-weight: bold;
+      font-family: inherit;
+      font-size: 12px;
+      letter-spacing: 1px;
+      border-radius: 4px;
+      cursor: pointer;
+      box-shadow: 0 5px 0 #0f100f, 0 8px 6px rgba(0,0,0,0.6);
+      transition: all 0.05s ease;
+    }
+
+    .btn-physical:active, .btn-physical.pressed {
+      transform: translateY(4px);
+      box-shadow: 0 1px 0 #0f100f, 0 2px 4px rgba(0,0,0,0.6);
+    }
+
+    .btn-confirm { border-top: 2px solid #58965c; }
+    .btn-cancel  { border-top: 2px solid #a84b4b; }
+    .btn-nav     { border-top: 2px solid #a8944b; }
+
+    .menu-item {
+      padding: 4px 8px;
+      margin: 2px 0;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .menu-item.selected {
+      background-color: var(--amber);
+      color: #000;
+      font-weight: bold;
+      text-shadow: none;
+    }
+
+    .disabled-text { opacity: 0.4; }
+
+    .bar-container {
+      width: 100%;
+      background: #222;
+      height: 12px;
+      border: 1px solid var(--amber-dim);
+      margin-top: 4px;
+    }
+    .bar-fill {
+      height: 100%;
+      background: var(--amber);
+    }
+
+    .terminal-box {
+      border: 2px double var(--amber);
+      background: #000;
+      padding: 12px;
+      margin: 10px 0;
+    }
+
+    .drop-zone {
+      border: 2px dashed var(--amber);
+      border-radius: 6px;
+      padding: 24px;
+      text-align: center;
+      margin: 15px 0;
+      background: rgba(248, 161, 0, 0.05);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .drop-zone.dragover {
+      background: rgba(248, 161, 0, 0.25);
+      border-style: solid;
+      box-shadow: 0 0 12px var(--amber-glow);
+    }
+
+    .fs-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 10px;
+      background: #333;
+      color: #aaa;
+      border: 1px solid #555;
+      padding: 3px 6px;
+      cursor: pointer;
+      z-index: 20;
+    }
+  </style>
+</head>
+<body>
+
+<div id="app-container">
+  <canvas id="texture-canvas"></canvas>
+  <button class="fs-btn" onclick="toggleFullscreen()">[1920x1080 / FULLSCREEN]</button>
+
+  <div class="crt-container">
+    <div class="crt-header">
+      <span id="crt-node-id">SYSTEM STATUS: ONLINE [NODE-07]</span>
+      <span id="crt-camp-status">SURVIVORS: 0</span>
+    </div>
+
+    <div id="crt-screen" class="crt-screen-content"></div>
+  </div>
+
+  <div class="hw-panel">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="color:#aaa; font-size:11px; font-weight:bold;">APOC-TECH HARDWARE</span>
+      <span class="hw-warning-tag">HIGH VOLTAGE</span>
+    </div>
+
+    <div class="hw-card">
+      <div class="hw-card-title">PROCESSOR CHIP [SURFACE PATCHED]</div>
+      <div id="hw-cpu-name" class="hw-card-value">P-78 Single-Core @ 1.2 GHz</div>
+      <div class="pcb-visual">
+        <div class="pcb-chip"></div>
+        <div class="pcb-chip" style="width:15px;"></div>
+        <span style="font-size:9px; color:#4a8256; font-family:monospace;">CPU_BUS_OK</span>
+      </div>
+    </div>
+
+    <div class="hw-card">
+      <div class="hw-card-title">RAM DISK MODULE [VOLATILE]</div>
+      <div id="hw-ram-name" class="hw-card-value">1.0 GB RAM DISK (0/1000 MB)</div>
+      <div class="pcb-visual">
+        <div class="pcb-chip" style="height:12px; width:100%;"></div>
+      </div>
+    </div>
+
+    <div class="hw-card">
+      <div class="hw-card-title">COMM MODULE [RADIO HARDWARE]</div>
+      <div id="hw-comm-name" class="hw-card-value">COMM-01 Radio Link</div>
+      <div class="pcb-visual">
+        <div class="pcb-chip" style="border-radius:50%; width:20px; height:20px;"></div>
+        <span style="font-size:9px; color:#4a8256; font-family:monospace;">ANT_GAI: +3dB</span>
+      </div>
+    </div>
+
+    <div class="status-hud">
+      <div style="color:#fff; font-weight:bold; font-size:11px; margin-bottom:4px;">OUTPOST SHELTER STATUS</div>
+      <div>POPULATION: <span id="hud-pop" style="color:var(--amber);">0</span></div>
+      <div>RATIONS STORED: <span id="hud-rations" style="color:var(--amber);">0</span> units</div>
+      <div>POCKET CREDITS: <span id="hud-scrap" style="color:var(--amber);">0</span></div>
+      <div>CAMP STABILITY: <span id="hud-stability" style="color:#61f205;">100%</span></div>
+    </div>
+  </div>
+
+  <div class="controls-panel">
+    <button class="btn-physical btn-confirm" onclick="triggerAction('CONFIRM')">ACCEPT / CONFIRM</button>
+    <button class="btn-physical btn-cancel" onclick="triggerAction('CANCEL')">CANCEL / BACK</button>
+    <button class="btn-physical btn-nav" onclick="triggerAction('PREV')">PREV [▲]</button>
+    <button class="btn-physical btn-nav" onclick="triggerAction('NEXT')">NEXT [▼]</button>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'RECLAIMER_IX_SAVE_STATE';
+  const MAX_TERMINAL_DISPLAY_JOBS = 7; // Max total terminal job list entries
+
+  // --- INFINITE HARDWARE SPECIFICATION FORMULAS ---
+  function getCpuSpec(level) {
+    const freq = (1.2 + (level - 1) * 1.2).toFixed(1);
+    const coreTitle = level === 1 ? 'Single-Core' : level === 2 ? 'Dual-Core' : level === 3 ? 'Quad-Core' : `Multi-Core v${level}`;
+    const name = `P-${78 + (level - 1) * 10} ${coreTitle} @ ${freq} GHz`;
+    const price = Math.floor(150 * Math.pow(2.5, level - 1));
+    const skillBonus = (level - 1) * 3.5;
+    return { level, name, price, skillBonus };
+  }
+
+  function getRamSpec(level) {
+    const capacityMB = Math.floor(1000 * Math.pow(2, level - 1));
+    const gbName = capacityMB >= 1000 ? (capacityMB / 1000).toFixed(1) + " GB" : capacityMB + " MB";
+    const name = `${gbName} RAM DISK`;
+    const price = Math.floor(100 * Math.pow(2.2, level - 1));
+    return { level, name, price, capacityMB };
+  }
+
+  function getCommSpec(level) {
+    const titles = ["Radio Link", "Satellite Array", "Quantum Mesh", "Sub-Space Array", "Orbital Relay"];
+    const title = titles[level - 1] || `Deep Space Transceiver v${level}`;
+    const name = `COMM-0${level} ${title}`;
+    const price = Math.floor(200 * Math.pow(2.5, level - 1));
+    const difficultyTier = level;
+    return { level, name, price, difficultyTier };
+  }
+
+  // Calculate RAM size requirement based on Job Difficulty Tier
+  function getJobRamSize(reqCommLevel) {
+    return Math.floor(600 * Math.pow(1.5, reqCommLevel - 1));
+  }
+
+  let gameState = {
+    credits: 50,
+    rations: 30,
+    population: 3,
+    hardware: { cpuLevel: 1, ramLevel: 1, commLevel: 1 },
+    acceptedJobs: [],
+    availableJobs: [],
+    bankBalance: 0,
+    isPaused: false,
+    lastTick: Date.now()
+  };
+
+  let currentView = 'MAIN_MENU'; // MAIN_MENU, SHOP, JOBS, BANK, SYSTEM, HACK_MINIGAME, IMPORT_SCREEN, CONFIRM_RESET
+  let selectedIndex = 0;
+  let activeHackJob = null;
+  let hackGameData = null;
+  let terminalNotification = null;
+
+  function generateProceduralTexture() {
+    const canvas = document.getElementById('texture-canvas');
+    const container = document.getElementById('app-container');
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
+    
+    const ctx = canvas.getContext('2d');
+    const imgData = ctx.createImageData(canvas.width, canvas.height);
+    const data = imgData.data;
+
+    for (let i = 0; i < data.length; i += 4) {
+      const noise = Math.random() * 255;
+      const isRust = Math.random() > 0.96;
+
+      if (isRust) {
+        data[i]     = 160 + Math.random() * 60;
+        data[i + 1] = 60 + Math.random() * 40;
+        data[i + 2] = 20;
+        data[i + 3] = 180;
+      } else {
+        data[i]     = noise;
+        data[i + 1] = noise;
+        data[i + 2] = noise;
+        data[i + 3] = Math.random() * 35;
+      }
+    }
+    ctx.putImageData(imgData, 0, 0);
+  }
+
+  function saveGame() {
+    gameState.lastTick = Date.now();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
+  }
+
+  function loadGame() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const loaded = JSON.parse(saved);
+        gameState = Object.assign(gameState, loaded);
+        if (!gameState.hardware) gameState.hardware = { cpuLevel: 1, ramLevel: 1, commLevel: 1 };
+      } catch (e) {
+        console.error("Failed to load save state.", e);
+      }
+    }
+  }
+
+  function getTotalUsedRam() {
+    return gameState.acceptedJobs.reduce((sum, job) => sum + (job.ramSize || getJobRamSize(job.reqCommLevel)), 0);
+  }
+
+  function showNotification(title, message, callback = null) {
+    terminalNotification = { title, message, callback };
+    render();
+  }
+
+  function dismissNotification() {
+    const cb = terminalNotification ? terminalNotification.callback : null;
+    terminalNotification = null;
+    if (cb) cb();
+    render();
+  }
+
+  function exportGameJSON() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(gameState));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `reclaimer_save_${Date.now()}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+    showNotification("EXPORT SUCCESSFUL", "State exported as JSON to host device filesystem.");
+  }
+
+  function handleFileImport(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      importGameFromText(e.target.result);
+    };
+    reader.onerror = () => {
+      showNotification("FILE ERROR", "Could not read save file.");
+    };
+    reader.readAsText(file);
+  }
+
+  function importGameFromText(jsonStr) {
+    if (!jsonStr || jsonStr.trim() === '') {
+      showNotification("IMPORT ERROR", "Input JSON file was empty.");
+      return;
+    }
+    try {
+      const parsed = JSON.parse(jsonStr);
+      if (parsed && typeof parsed === 'object') {
+        gameState = Object.assign(gameState, parsed);
+        saveGame();
+        currentView = 'MAIN_MENU';
+        gameState.isPaused = false;
+        selectedIndex = 0;
+        showNotification("IMPORT SUCCESSFUL", "Terminal state restored from JSON file!");
+      }
+    } catch(e) {
+      showNotification("IMPORT ERROR", "Invalid JSON data structure in file.");
+    }
+  }
+
+  function resetGame() {
+    localStorage.removeItem(STORAGE_KEY);
+    location.reload();
+  }
+
+  // Generates dynamic jobs based on Hardware Levels and RAM Clamps
+  function generateAvailableJobs() {
+    const commSpec = getCommSpec(gameState.hardware.commLevel);
+    const maxCommTier = commSpec.difficultyTier;
+    
+    const acceptedCount = gameState.acceptedJobs.length;
+    // Clamped count so total list entries (accepted + available) fits on terminal UI
+    const targetAvailable = Math.max(2, Math.min(5, MAX_TERMINAL_DISPLAY_JOBS - acceptedCount));
+    
+    gameState.availableJobs = [];
+    const jobTypes = [
+      "Infiltrate Outpost Firewall", "Decrypt Ration Ledger", 
+      "Hijack Broadcast Signal", "Extract Water Pump Firmware",
+      "Override Defense Turret", "Bypass Scrap Vault Lock",
+      "Reroute Substation Grid", "Crack Military Transponder",
+      "Intercept Satellite Feed", "Scavenge Vault Encryption",
+      "Purge System Worm Matrix", "Siphon Energy Sub-Relay"
+    ];
+
+    for (let i = 0; i < targetAvailable; i++) {
+      let reqComm = 1;
+      if (i === 0) reqComm = Math.max(1, maxCommTier - 1);
+      else if (i === 1) reqComm = maxCommTier;
+      else reqComm = maxCommTier + (i - 1);
+
+      const title = jobTypes[Math.floor(Math.random() * jobTypes.length)];
+      const diffNames = ['EASY', 'MEDIUM', 'HARD', 'ELITE'];
+      const difficulty = diffNames[reqComm - 1] || `TIER-${reqComm}`;
+      
+      const seqLength = Math.min(10, 2 + reqComm); 
+      const ramSize = getJobRamSize(reqComm);
+
+      const rewardCredits = Math.floor(50 * Math.pow(reqComm, 1.2) + Math.random() * (20 * reqComm));
+      const rewardRations = Math.floor(8 * reqComm + Math.random() * (5 * reqComm));
+
+      gameState.availableJobs.push({
+        id: 'job_' + Math.random().toString(36).substr(2, 6),
+        title: title,
+        reqCommLevel: reqComm,
+        difficulty: difficulty,
+        seqLength: seqLength,
+        ramSize: ramSize,
+        rewardCredits: rewardCredits,
+        rewardRations: rewardRations,
+        locked: reqComm > gameState.hardware.commLevel
+      });
+    }
+  }
+
+  // Game Loop handles pause/resume state switching
+  function startSimulationLoop() {
+    setInterval(() => {
+      // Pause simulation when in System Menu or explicit paused state
+      if (gameState.isPaused || currentView === 'SYSTEM' || currentView === 'IMPORT_SCREEN' || currentView === 'CONFIRM_RESET') {
+        return;
+      }
+
+      if (gameState.population <= 0) return;
+
+      const totalRequired = gameState.population * 0.2;
+      
+      if (gameState.rations >= totalRequired) {
+        gameState.rations -= totalRequired;
+        if (gameState.rations > gameState.population * 5 && Math.random() < 0.15) {
+          gameState.population += 1;
+        }
+      } else {
+        gameState.rations = 0;
+        if (Math.random() < 0.4) {
+          gameState.population = Math.max(0, gameState.population - 1);
+        }
+      }
+
+      saveGame();
+      updateHUD();
+      if (currentView === 'MAIN_MENU' || currentView === 'SYSTEM') render();
+    }, 4000);
+  }
+
+  function startHackingJob(job) {
+    activeHackJob = job;
+    currentView = 'HACK_MINIGAME';
+    selectedIndex = 0;
+
+    const sequenceLength = job.seqLength || 4;
+    const cpuBonus = getCpuSpec(gameState.hardware.cpuLevel).skillBonus;
+    
+    const possibleSymbols = ['0x4A', '0xF2', '0x11', '0xC9', '0x88', '0xEE', '0x7B', '0x3D'];
+    const activePool = possibleSymbols.slice(0, Math.min(possibleSymbols.length, 4 + Math.floor(job.reqCommLevel / 2)));
+    
+    let targetSeq = [];
+    for (let i = 0; i < sequenceLength; i++) {
+      targetSeq.push(activePool[Math.floor(Math.random() * activePool.length)]);
+    }
+
+    const baseSolveWindow = sequenceLength * 2.8; 
+    const totalAllowedTime = baseSolveWindow + cpuBonus;
+
+    hackGameData = {
+      target: targetSeq,
+      currentInput: [],
+      options: activePool,
+      timer: totalAllowedTime,
+      maxTimer: totalAllowedTime
+    };
+
+    hackGameData.interval = setInterval(() => {
+      hackGameData.timer -= 0.1;
+      if (hackGameData.timer <= 0) {
+        clearInterval(hackGameData.interval);
+        failHack("CONNECTION TIMED OUT");
+      } else {
+        render();
+      }
+    }, 100);
+
+    render();
+  }
+
+  function inputHackSymbol(symbol) {
+    if (!hackGameData) return;
+
+    const expected = hackGameData.target[hackGameData.currentInput.length];
+    if (symbol === expected) {
+      hackGameData.currentInput.push(symbol);
+      if (hackGameData.currentInput.length === hackGameData.target.length) {
+        clearInterval(hackGameData.interval);
+        completeHack();
+      }
+    } else {
+      hackGameData.timer = Math.max(0, hackGameData.timer - 2.0);
+    }
+    render();
+  }
+
+  function completeHack() {
+    const creds = activeHackJob.rewardCredits;
+    const rats = activeHackJob.rewardRations;
+
+    gameState.credits += creds;
+    gameState.rations += rats;
+    
+    gameState.acceptedJobs = gameState.acceptedJobs.filter(j => j.id !== activeHackJob.id);
+    gameState.availableJobs = gameState.availableJobs.filter(j => j.id !== activeHackJob.id);
+    
+    activeHackJob = null;
+    hackGameData = null;
+    currentView = 'JOBS';
+    saveGame();
+    showNotification("DECRYPTION SUCCESSFUL", `Extracted Rewards:\n+${creds} Credits\n+${rats} Rations`);
+  }
+
+  function failHack(reason) {
+    activeHackJob = null;
+    hackGameData = null;
+    currentView = 'JOBS';
+    showNotification("DECRYPTION FAILED", `Reason: ${reason}`);
+  }
+
+  function switchView(newView) {
+    currentView = newView;
+    selectedIndex = 0;
+
+    // View-dependent state management: Pause on System Menu, Resume on Main Menu
+    if (newView === 'SYSTEM' || newView === 'IMPORT_SCREEN' || newView === 'CONFIRM_RESET') {
+      gameState.isPaused = true;
+    } else if (newView === 'MAIN_MENU') {
+      gameState.isPaused = false;
+    }
+
+    saveGame();
+  }
+
+  function triggerAction(action) {
+    const btnMap = { CONFIRM: '.btn-confirm', CANCEL: '.btn-cancel', PREV: '.btn-nav:nth-of-type(3)', NEXT: '.btn-nav:nth-of-type(4)' };
+    const el = document.querySelector(btnMap[action]);
+    if (el) {
+      el.classList.add('pressed');
+      setTimeout(() => el.classList.remove('pressed'), 120);
+    }
+
+    if (terminalNotification) {
+      dismissNotification();
+      return;
+    }
+
+    if (gameState.population <= 0 && action === 'CONFIRM') {
+      resetGame();
+      return;
+    }
+
+    if (currentView === 'IMPORT_SCREEN') {
+      if (action === 'CANCEL') switchView('SYSTEM');
+      return;
+    }
+
+    if (currentView === 'CONFIRM_RESET') {
+      if (action === 'CONFIRM') resetGame();
+      if (action === 'CANCEL') switchView('SYSTEM');
+      return;
+    }
+
+    if (currentView === 'HACK_MINIGAME') {
+      if (action === 'CANCEL') {
+        clearInterval(hackGameData.interval);
+        failHack("ABORTED BY OPERATOR");
+        return;
+      }
+      if (action === 'NEXT') selectedIndex = (selectedIndex + 1) % hackGameData.options.length;
+      if (action === 'PREV') selectedIndex = (selectedIndex - 1 + hackGameData.options.length) % hackGameData.options.length;
+      if (action === 'CONFIRM') inputHackSymbol(hackGameData.options[selectedIndex]);
+      render();
+      return;
+    }
+
+    const menuItemsCount = getMenuItemsCount();
+
+    if (action === 'NEXT') {
+      selectedIndex = (selectedIndex + 1) % menuItemsCount;
+    } else if (action === 'PREV') {
+      selectedIndex = (selectedIndex - 1 + menuItemsCount) % menuItemsCount;
+    } else if (action === 'CANCEL') {
+      if (currentView !== 'MAIN_MENU') {
+        switchView('MAIN_MENU');
+      }
+    } else if (action === 'CONFIRM') {
+      executeSelection();
+    }
+
+    render();
+  }
+
+  function getMenuItemsCount() {
+    switch(currentView) {
+      case 'MAIN_MENU': return 4;
+      case 'SHOP': return 5;
+      case 'JOBS': return gameState.availableJobs.length + gameState.acceptedJobs.length + 1;
+      case 'BANK': return 3;
+      case 'SYSTEM': return 4;
+      default: return 1;
+    }
+  }
+
+  function executeSelection() {
+    if (currentView === 'MAIN_MENU') {
+      const views = ['SHOP', 'JOBS', 'BANK', 'SYSTEM'];
+      const targetView = views[selectedIndex];
+      
+      if (targetView === 'JOBS') {
+        generateAvailableJobs();
+      }
+      switchView(targetView);
+    } else if (currentView === 'SHOP') {
+      handleShopPurchase(selectedIndex);
+    } else if (currentView === 'JOBS') {
+      handleJobSelection(selectedIndex);
+    } else if (currentView === 'BANK') {
+      handleBankAction(selectedIndex);
+    } else if (currentView === 'SYSTEM') {
+      if (selectedIndex === 0) exportGameJSON();
+      if (selectedIndex === 1) switchView('IMPORT_SCREEN');
+      if (selectedIndex === 2) switchView('CONFIRM_RESET');
+      if (selectedIndex === 3) switchView('MAIN_MENU');
+    }
+  }
+
+  function handleShopPurchase(idx) {
+    if (idx === 0) {
+      const cost = getCpuSpec(gameState.hardware.cpuLevel).price;
+      if (gameState.credits >= cost) {
+        gameState.credits -= cost;
+        gameState.hardware.cpuLevel++;
+        showNotification("PURCHASE SUCCESSFUL", `CPU Module upgraded to Level ${gameState.hardware.cpuLevel}!\nSolve time bonus increased.`);
+      } else showNotification("SHOP ERROR", `Requires ${cost} Pocket Credits to upgrade CPU!`);
+    } else if (idx === 1) {
+      const cost = getRamSpec(gameState.hardware.ramLevel).price;
+      if (gameState.credits >= cost) {
+        gameState.credits -= cost;
+        gameState.hardware.ramLevel++;
+        showNotification("PURCHASE SUCCESSFUL", `RAM Module upgraded to Level ${gameState.hardware.ramLevel}!\nCapacity: ${getRamSpec(gameState.hardware.ramLevel).capacityMB} MB RAM.`);
+      } else showNotification("SHOP ERROR", `Requires ${cost} Pocket Credits to upgrade RAM!`);
+    } else if (idx === 2) {
+      const cost = getCommSpec(gameState.hardware.commLevel).price;
+      if (gameState.credits >= cost) {
+        gameState.credits -= cost;
+        gameState.hardware.commLevel++;
+        showNotification("PURCHASE SUCCESSFUL", `COMM Hardware upgraded to Level ${gameState.hardware.commLevel}!\nHigher broadcast tiers unlocked.`);
+      } else showNotification("SHOP ERROR", `Requires ${cost} Pocket Credits to upgrade COMM!`);
+    } else if (idx === 3) {
+      if (gameState.credits >= 20) {
+        gameState.credits -= 20;
+        gameState.rations += 15;
+        showNotification("PURCHASE SUCCESSFUL", "+15 Rations added to camp inventory!");
+      } else showNotification("SHOP ERROR", "20 Pocket Credits required for Rations Pack!");
+    } else if (idx === 4) {
+      switchView('MAIN_MENU');
+    }
+    saveGame();
+  }
+
+  function handleJobSelection(idx) {
+    const accLen = gameState.acceptedJobs.length;
+
+    if (idx < accLen) {
+      const job = gameState.acceptedJobs[idx];
+      startHackingJob(job);
+    } else if (idx < accLen + gameState.availableJobs.length) {
+      const availIdx = idx - accLen;
+      const job = gameState.availableJobs[availIdx];
+
+      if (job.locked) {
+        showNotification("HARDWARE INCOMPATIBLE", `Required: COMM Module Level 0${job.reqCommLevel}.\nUpgrade comms in shop to unlock higher specs.`);
+        return;
+      }
+
+      const currentRam = getRamSpec(gameState.hardware.ramLevel);
+      const usedRam = getTotalUsedRam();
+      const jobRam = job.ramSize || getJobRamSize(job.reqCommLevel);
+
+      if (accLen >= 6) {
+        showNotification("RAM DISK FULL", "Maximum accepted jobs capacity reached (6 max). Execute existing jobs first.");
+        return;
+      }
+
+      if (usedRam + jobRam > currentRam.capacityMB) {
+        showNotification("INSUFFICIENT RAM SPACE", `Job requires ${jobRam} MB RAM Disk space.\nAvailable: ${currentRam.capacityMB - usedRam} MB / Capacity: ${currentRam.capacityMB} MB.\nUpgrade RAM Module in Shop.`);
+        return;
+      }
+
+      gameState.acceptedJobs.push(job);
+      gameState.availableJobs.splice(availIdx, 1);
+      saveGame();
+      showNotification("JOB ACCEPTED", `Job stored in RAM Disk (${jobRam} MB).\nSelect under ACCEPTED JOBS to execute.`);
+    } else {
+      switchView('MAIN_MENU');
+    }
+  }
+
+  function handleBankAction(idx) {
+    if (idx === 0) {
+      if (gameState.credits >= 25) {
+        gameState.credits -= 25;
+        gameState.bankBalance += 25;
+      } else showNotification("BANK ERROR", "Not enough Pocket Credits to deposit.");
+    } else if (idx === 1) {
+      if (gameState.bankBalance >= 25) {
+        gameState.bankBalance -= 25;
+        gameState.credits += 25;
+      } else showNotification("BANK ERROR", "Vault balance insufficient.");
+    } else if (idx === 2) {
+      switchView('MAIN_MENU');
+    }
+    saveGame();
+  }
+
+  function updateHUD() {
+    document.getElementById('hud-pop').innerText = gameState.population;
+    document.getElementById('hud-rations').innerText = gameState.rations.toFixed(1);
+    document.getElementById('hud-scrap').innerText = gameState.credits;
+    document.getElementById('crt-camp-status').innerText = `SURVIVORS: ${gameState.population}`;
+
+    const cpu = getCpuSpec(gameState.hardware.cpuLevel);
+    const ram = getRamSpec(gameState.hardware.ramLevel);
+    const comm = getCommSpec(gameState.hardware.commLevel);
+    const usedRam = getTotalUsedRam();
+
+    document.getElementById('crt-node-id').innerText = gameState.isPaused 
+      ? "SYSTEM STATUS: PAUSED [SYSTEM MENU]" 
+      : "SYSTEM STATUS: ONLINE [NODE-07]";
+
+    document.getElementById('hw-cpu-name').innerText = cpu.name;
+    document.getElementById('hw-ram-name').innerText = `${ram.name} (${usedRam}/${ram.capacityMB} MB)`;
+    document.getElementById('hw-comm-name').innerText = comm.name;
+  }
+
+  function render() {
+    updateHUD();
+    const screen = document.getElementById('crt-screen');
+
+    if (terminalNotification) {
+      screen.innerHTML = `
+        <div class="terminal-box">
+          <div style="color:var(--amber); font-weight:bold; border-bottom:1px solid var(--amber); padding-bottom:4px;">
+            [ ${terminalNotification.title} ]
+          </div>
+          <div style="margin:12px 0; white-space:pre-wrap;">${terminalNotification.message}</div>
+          <div class="menu-item selected" style="justify-content:center;">> PRESS ANY BUTTON TO ACKNOWLEDGE <</div>
+        </div>
+      `;
+      return;
+    }
+
+    if (gameState.population <= 0) {
+      screen.innerHTML = `
+        <div style="color:#ff3333; text-align:center; margin-top:40px;">
+          <h2>[ CRITICAL SYSTEM FAILURE ]</h2>
+          <p style="margin-top:15px;">ALL CAMP SURVIVORS HAVE PERISHED OR FLED.</p>
+          <p>THE TERMINAL OPERATOR IS ALONE IN THE WASTES.</p>
+          <br>
+          <div class="menu-item selected" style="justify-content:center;">> PRESS CONFIRM BUTTON TO REBOOT NODE <</div>
+        </div>
+      `;
+      return;
+    }
+
+    let html = '';
+
+    if (currentView === 'MAIN_MENU') {
+      const items = ['[1] EQUIPMENT & RATIONS SHOP', '[2] NETWORK JOBS BOARD', '[3] VAULT BANK ACCOUNT', '[4] SYSTEM DIAGNOSTICS & SAVES'];
+      html += `<div style="margin-bottom:10px; border-bottom:1px dashed var(--amber);">MAIN NAVIGATION MENU</div>`;
+      items.forEach((item, i) => {
+        const sel = i === selectedIndex ? 'selected' : '';
+        html += `<div class="menu-item ${sel}">${item}</div>`;
+      });
+      html += `<div style="margin-top:auto; font-size:11px; color:var(--amber-dim);">POCKET CREDITS: ${gameState.credits} CR | RATIONS: ${gameState.rations.toFixed(1)} UNITS</div>`;
+    } 
+
+    else if (currentView === 'SHOP') {
+      const cpuCost = getCpuSpec(gameState.hardware.cpuLevel).price;
+      const ramCost = getRamSpec(gameState.hardware.ramLevel).price;
+      const commCost = getCommSpec(gameState.hardware.commLevel).price;
+
+      const shopItems = [
+        `CPU: UPGRADE TO L${gameState.hardware.cpuLevel + 1} (${getCpuSpec(gameState.hardware.cpuLevel + 1).name}) - ${cpuCost} CR`,
+        `RAM: UPGRADE TO L${gameState.hardware.ramLevel + 1} (${getRamSpec(gameState.hardware.ramLevel + 1).capacityMB} MB) - ${ramCost} CR`,
+        `COMM: UPGRADE TO L${gameState.hardware.commLevel + 1} (Tier ${gameState.hardware.commLevel + 1}) - ${commCost} CR`,
+        `RATIONS PACK (+15 Rations) - 20 CR`,
+        `< BACK TO MAIN MENU`
+      ];
+
+      html += `<div style="margin-bottom:4px; border-bottom:1px dashed var(--amber);">SURVIVAL & HARDWARE SHOP</div>`;
+      html += `<div style="margin-bottom:8px; color:#61f205; font-weight:bold;">AVAILABLE POCKET CREDITS: ${gameState.credits} CR</div>`;
+      shopItems.forEach((item, i) => {
+        const sel = i === selectedIndex ? 'selected' : '';
+        html += `<div class="menu-item ${sel}">${item}</div>`;
+      });
+    }
+
+    else if (currentView === 'JOBS') {
+      const ramSpec = getRamSpec(gameState.hardware.ramLevel);
+      const usedRam = getTotalUsedRam();
+      const freeRam = ramSpec.capacityMB - usedRam;
+
+      html += `<div style="margin-bottom:4px; border-bottom:1px dashed var(--amber);">NETWORK JOBS BOARD</div>`;
+      html += `<div style="font-size:12px; color:#61f205; margin-bottom:6px;">RAM DISK USAGE: ${usedRam} / ${ramSpec.capacityMB} MB (${freeRam} MB FREE)</div>`;
+      
+      let itemIdx = 0;
+      if (gameState.acceptedJobs.length > 0) {
+        html += `<div style="font-size:11px; color:#61f205; margin:4px 0;">-- ACCEPTED JOBS [IN RAM DISK] --</div>`;
+        gameState.acceptedJobs.forEach((j) => {
+          const sel = itemIdx === selectedIndex ? 'selected' : '';
+          const size = j.ramSize || getJobRamSize(j.reqCommLevel);
+          html += `<div class="menu-item ${sel}"><span>RUN: ${j.title}</span> <span>[${j.difficulty} | ${size} MB]</span></div>`;
+          itemIdx++;
+        });
+      }
+
+      html += `<div style="font-size:11px; color:var(--amber-dim); margin:4px 0;">-- AVAILABLE BROADCASTS --</div>`;
+      gameState.availableJobs.forEach((j) => {
+        const sel = itemIdx === selectedIndex ? 'selected' : '';
+        const size = j.ramSize || getJobRamSize(j.reqCommLevel);
+        const status = j.locked ? `<span style="color:#ff4444">[HW REQ: COMM 0${j.reqCommLevel}]</span>` : `[ACCEPT - ${size} MB] +${j.rewardCredits}CR`;
+        html += `<div class="menu-item ${sel} ${j.locked ? 'disabled-text' : ''}"><span>${j.title}</span> <span>${status}</span></div>`;
+        itemIdx++;
+      });
+
+      const selBack = itemIdx === selectedIndex ? 'selected' : '';
+      html += `<div style="margin-top:10px;" class="menu-item ${selBack}">< BACK TO MAIN MENU</div>`;
+    }
+
+    else if (currentView === 'BANK') {
+      html += `<div style="margin-bottom:10px; border-bottom:1px dashed var(--amber);">VAULT BANKING INTERFACE</div>`;
+      html += `<div style="margin:6px 0;">VAULT BALANCE: <span style="color:#61f205;">${gameState.bankBalance} CR</span></div>`;
+      html += `<div style="margin:6px 0;">POCKET CREDITS: ${gameState.credits} CR</div>`;
+      
+      const options = ['DEPOSIT 25 CR', 'WITHDRAW 25 CR', '< BACK TO MAIN MENU'];
+      options.forEach((opt, i) => {
+        const sel = i === selectedIndex ? 'selected' : '';
+        html += `<div class="menu-item ${sel}">${opt}</div>`;
+      });
+    }
+
+    else if (currentView === 'SYSTEM') {
+      html += `<div style="margin-bottom:10px; border-bottom:1px dashed var(--amber);">SYSTEM DIAGNOSTICS & MEMORY [PAUSED]</div>`;
+      html += `<div style="font-size:12px; margin-bottom:10px; color:#ff4444;">GAMEPLAY PAUSED WHILE IN SYSTEM MENU</div>`;
+      
+      const options = ['EXPORT SAVE STATE (JSON)', 'IMPORT SAVE STATE (FILE UPLOAD)', 'FORMAT MEMORY (RESET GAME)', '< BACK TO MAIN MENU'];
+      options.forEach((opt, i) => {
+        const sel = i === selectedIndex ? 'selected' : '';
+        html += `<div class="menu-item ${sel}">${opt}</div>`;
+      });
+    }
+
+    else if (currentView === 'IMPORT_SCREEN') {
+      html += `<div style="margin-bottom:10px; border-bottom:1px dashed var(--amber);">IMPORT STATE FILE DROP ZONE</div>`;
+      html += `
+        <div id="drop-zone" class="drop-zone" 
+             ondragover="event.preventDefault(); this.classList.add('dragover');" 
+             ondragleave="this.classList.remove('dragover');" 
+             ondrop="event.preventDefault(); this.classList.remove('dragover'); handleFileDrop(event);"
+             onclick="document.getElementById('file-upload-input').click();">
+          <div style="font-size:15px; font-weight:bold; margin-bottom:6px;">[ DROP JSON SAVE FILE HERE ]</div>
+          <div style="font-size:12px; color:var(--amber-dim);">OR CLICK TO BROWSE LOCAL DISK</div>
+          <input type="file" id="file-upload-input" accept=".json" style="display:none;" onchange="handleFileSelect(event)">
+        </div>
+      `;
+      html += `<div style="margin-top:10px; display:flex; justify-content:space-between; font-size:12px;">
+                 <span>[FILE FORMAT: .JSON]</span>
+                 <span>[CANCEL] RETURN TO SYSTEM</span>
+               </div>`;
+    }
+
+    else if (currentView === 'CONFIRM_RESET') {
+      html += `<div class="terminal-box" style="border-color:#ff4444;">
+                 <div style="color:#ff4444; font-weight:bold;">[ WARNING: MEMORY PURGE ]</div>
+                 <div style="margin:10px 0;">ARE YOU SURE YOU WANT TO FORMAT ALL MEMORY? ALL CAMP SURVIVORS AND HARDWARE PROGRESS WILL BE ERASED.</div>
+                 <div class="menu-item selected" style="justify-content:center;">PRESS CONFIRM TO FORMAT / CANCEL TO ABORT</div>
+               </div>`;
+    }
+
+    else if (currentView === 'HACK_MINIGAME') {
+      html += `<div style="margin-bottom:10px; border-bottom:1px dashed var(--amber);">DECRYPTION TERMINAL ACTIVE</div>`;
+      html += `<div>TARGET SEQUENCE: ${hackGameData.target.join(' ')}</div>`;
+      html += `<div>INPUT BUFFER: <span style="color:#61f205;">${hackGameData.currentInput.join(' ')}</span>_</div>`;
+      
+      const timePercent = Math.max(0, (hackGameData.timer / hackGameData.maxTimer) * 100);
+      html += `<div style="margin:10px 0;">TIME REMAINING: ${hackGameData.timer.toFixed(1)}s
+                 <div class="bar-container"><div class="bar-fill" style="width:${timePercent}%;"></div></div>
+               </div>`;
+
+      html += `<div style="margin-top:15px; font-size:12px;">SELECT MATCHING HEX CODE:</div>`;
+      hackGameData.options.forEach((opt, i) => {
+        const sel = i === selectedIndex ? 'selected' : '';
+        html += `<div class="menu-item ${sel}" style="display:inline-block; margin-right:10px;">[ ${opt} ]</div>`;
+      });
+    }
+
+    screen.innerHTML = html;
+  }
+
+  function handleFileDrop(e) {
+    if (e.dataTransfer && e.dataTransfer.files.length > 0) {
+      handleFileImport(e.dataTransfer.files[0]);
+    }
+  }
+
+  function handleFileSelect(e) {
+    if (e.target.files && e.target.files.length > 0) {
+      handleFileImport(e.target.files[0]);
+    }
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') triggerAction('PREV');
+    if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') triggerAction('NEXT');
+    if (e.key === 'Enter' || e.key === ' ') triggerAction('CONFIRM');
+    if (e.key === 'Escape' || e.key === 'Backspace') triggerAction('CANCEL');
+  });
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+
+  window.onload = () => {
+    generateProceduralTexture();
+    loadGame();
+    generateAvailableJobs();
+    startSimulationLoop();
+    render();
+  };
+
+  window.onresize = () => {
+    generateProceduralTexture();
+  };
+</script>
+</body>
+</html>
