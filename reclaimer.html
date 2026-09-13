@@ -10,14 +10,17 @@
       --amber-dim: #7a4e00;
       --amber-glow: rgba(248, 161, 0, 0.4);
       --crt-bg: #0d0800;
-      --panel-bg: #2a2c2b;
+      --panel-bg: #2d302e;
       --metal-border: #4a4d4b;
+      --pcb-bg: #0e2714;
+      --pcb-border: #1d4d27;
+      --pcb-trace: #1e592c;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
 
     body {
-      background-color: #050505;
+      background-color: #030303;
       color: var(--amber);
       font-family: 'Courier New', Courier, monospace;
       display: flex;
@@ -27,42 +30,74 @@
       overflow: hidden;
     }
 
+    /* Heavy Metal Terminal Enclosure */
     #app-container {
       position: relative;
       width: 1280px;
       height: 720px;
-      background: #1e201f;
-      border: 12px solid #141514;
-      border-radius: 12px;
-      box-shadow: inset 0 0 40px #000, 0 20px 50px rgba(0,0,0,0.9);
+      background: radial-gradient(circle at 50% 50%, #3a3d3b 0%, #202221 70%, #141514 100%);
+      border: 14px solid #1c1e1d;
+      border-radius: 16px;
+      box-shadow: 
+        inset 0 0 60px rgba(0,0,0,0.9), 
+        inset 0 0 10px rgba(255,255,255,0.05),
+        0 25px 60px rgba(0,0,0,0.95);
       display: grid;
-      grid-template-columns: 65% 35%;
-      grid-template-rows: 82% 18%;
-      padding: 16px;
+      grid-template-columns: 63% 37%;
+      grid-template-rows: 81% 19%;
+      padding: 18px;
       gap: 16px;
     }
 
+    /* Ambient Occlusion & Grime Canvas Overlay */
     #texture-canvas {
       position: absolute;
       top: 0; left: 0;
       width: 100%; height: 100%;
       pointer-events: none;
-      z-index: 10;
-      opacity: 0.55;
+      z-index: 20;
+      opacity: 0.75;
       mix-blend-mode: overlay;
     }
 
+    /* Screws on Housing Corners */
+    .screw-head {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: linear-gradient(135deg, #666, #222);
+      border-radius: 50%;
+      box-shadow: inset 1px 1px 2px rgba(255,255,255,0.4), 1px 1px 3px #000;
+      z-index: 15;
+    }
+    .screw-head::after {
+      content: '';
+      position: absolute;
+      top: 5px; left: 2px;
+      width: 8px; height: 2px;
+      background: #111;
+      transform: rotate(35deg);
+    }
+    .screw-tl { top: 6px; left: 6px; }
+    .screw-tr { top: 6px; right: 6px; }
+    .screw-bl { bottom: 6px; left: 6px; }
+    .screw-br { bottom: 6px; right: 6px; }
+
+    /* CRT Screen Styling */
     .crt-container {
       grid-column: 1 / 2;
       grid-row: 1 / 2;
       background: var(--crt-bg);
-      border: 8px solid #111;
-      border-radius: 16px;
+      border: 10px solid #161716;
+      border-radius: 18px;
       position: relative;
       padding: 20px;
       display: flex;
       flex-direction: column;
-      box-shadow: inset 0 0 35px rgba(0,0,0,1), 0 0 10px rgba(0,0,0,0.8);
+      box-shadow: 
+        inset 0 0 45px rgba(0,0,0,1), 
+        0 0 0 2px #333,
+        0 5px 15px rgba(0,0,0,0.8);
       overflow: hidden;
     }
 
@@ -70,7 +105,7 @@
       content: " ";
       position: absolute;
       top: 0; left: 0; bottom: 0; right: 0;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.28) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
       background-size: 100% 3px, 6px 100%;
       pointer-events: none;
       z-index: 5;
@@ -80,7 +115,7 @@
       content: " ";
       position: absolute;
       top: 0; left: 0; bottom: 0; right: 0;
-      background: radial-gradient(circle, rgba(0,0,0,0) 60%, rgba(0,0,0,0.8) 100%);
+      background: radial-gradient(circle, rgba(0,0,0,0) 55%, rgba(0,0,0,0.85) 100%);
       pointer-events: none;
       z-index: 6;
     }
@@ -106,123 +141,351 @@
       z-index: 2;
     }
 
+    /* Right Hardware Panel & PCB Slots */
     .hw-panel {
       grid-column: 2 / 3;
       grid-row: 1 / 3;
-      background: #252726;
-      border: 4px solid #161716;
+      background: linear-gradient(180deg, #282a29 0%, #1e201f 100%);
+      border: 3px solid #141514;
       border-radius: 8px;
-      padding: 12px;
+      padding: 10px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+      gap: 10px;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.9);
       position: relative;
+    }
+
+    .panel-header-strip {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #181918;
+      padding: 4px 8px;
+      border: 1px solid #333;
+      border-radius: 4px;
     }
 
     .hw-warning-tag {
-      background: #b52a1c;
+      background: #911e13;
       color: #fff;
-      font-size: 10px;
+      font-size: 9px;
       font-weight: bold;
       padding: 2px 6px;
       border-radius: 2px;
-      display: inline-block;
-      text-align: center;
-      border: 1px dashed #ff8888;
+      border: 1px dashed #ff7777;
       letter-spacing: 1px;
+      text-shadow: 0 1px 2px #000;
     }
 
     .hw-card {
-      background: #151716;
-      border: 2px solid #3a3d3b;
-      padding: 10px;
-      border-radius: 4px;
+      background: #151615;
+      border: 2px solid #333634;
+      padding: 8px 10px 10px 10px;
+      border-radius: 6px;
       position: relative;
+      box-shadow: inset 0 0 10px #000, 0 4px 8px rgba(0,0,0,0.5);
     }
 
     .hw-card-title {
-      font-size: 11px;
-      color: #8a8d8a;
+      font-size: 10px;
+      color: #9a9d9a;
+      font-weight: bold;
       text-transform: uppercase;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       letter-spacing: 1px;
+      display: flex;
+      justify-content: space-between;
     }
 
     .hw-card-value {
       color: #61f205;
       font-family: monospace;
       font-weight: bold;
-      font-size: 13px;
+      font-size: 12px;
       text-shadow: 0 0 5px rgba(97, 242, 5, 0.4);
+      margin-bottom: 6px;
     }
 
+    /* Surface-Mounted PCB Chassis Sleds */
     .pcb-visual {
-      height: 40px;
-      background: #113018;
-      border: 1px solid #1e5229;
-      margin-top: 6px;
-      border-radius: 3px;
+      height: 64px;
+      background: var(--pcb-bg);
+      border: 2px solid var(--pcb-border);
+      border-radius: 4px;
       position: relative;
       overflow: hidden;
       display: flex;
       align-items: center;
-      padding: 0 8px;
-      gap: 6px;
+      padding: 0 32px;
+      gap: 12px;
+      box-shadow: inset 0 0 12px #000;
+      /* Simulated copper trace pattern background */
+      background-image: 
+        radial-gradient(#1e592c 15%, transparent 16%),
+        linear-gradient(45deg, transparent 48%, var(--pcb-trace) 48%, var(--pcb-trace) 52%, transparent 52%);
+      background-size: 12px 12px, 20px 20px;
     }
 
-    .pcb-chip {
-      background: #222;
-      border: 1px solid #555;
-      height: 24px;
-      min-width: 30px;
+    /* Metal Bracket Straps / Hold Downs */
+    .clamp-bracket {
+      position: absolute;
+      top: -2px;
+      bottom: -2px;
+      width: 22px;
+      background: linear-gradient(90deg, #3d403e, #686b69, #2b2c2b);
+      border: 1px solid #111;
       border-radius: 2px;
+      box-shadow: 0 0 5px #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+    .clamp-left { left: 4px; }
+    .clamp-right { right: 4px; }
+    .clamp-label {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-size: 8px;
+      font-weight: bold;
+      color: #aaa;
+      letter-spacing: 1px;
+    }
+
+    /* PCB Component Detailing */
+    .pcb-chip {
+      background: linear-gradient(145deg, #1f201f, #0a0a0a);
+      border: 1px solid #444;
+      height: 32px;
+      min-width: 42px;
+      border-radius: 2px;
+      position: relative;
+      box-shadow: 2px 2px 4px #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 7px;
+      color: #777;
+    }
+    /* IC Chip pin details */
+    .pcb-chip::before {
+      content: '';
+      position: absolute;
+      top: -3px; left: 4px; right: 4px; height: 2px;
+      background: repeating-linear-gradient(90deg, #aaa 0px, #aaa 2px, transparent 2px, transparent 5px);
+    }
+    .pcb-chip::after {
+      content: '';
+      position: absolute;
+      bottom: -3px; left: 4px; right: 4px; height: 2px;
+      background: repeating-linear-gradient(90deg, #aaa 0px, #aaa 2px, transparent 2px, transparent 5px);
+    }
+
+    /* Resistor Component with Color Bands */
+    .resistor {
+      width: 28px;
+      height: 8px;
+      background: #c2a678;
+      border-radius: 3px;
+      position: relative;
+      border: 1px solid #444;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 3px;
+      box-shadow: 1px 1px 3px #000;
+    }
+    .resistor::before, .resistor::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      width: 6px; height: 1px;
+      background: #888;
+    }
+    .resistor::before { left: -6px; }
+    .resistor::after { right: -6px; }
+    .res-band { width: 3px; height: 100%; }
+    .band-red { background: #d92b2b; }
+    .band-gold { background: #d9a72b; }
+    .band-black { background: #111; }
+    .band-blue { background: #2b6bd9; }
+
+    /* Capacitor Cylinders */
+    .capacitor {
+      width: 14px;
+      height: 14px;
+      background: radial-gradient(circle at 30% 30%, #555, #111);
+      border-radius: 50%;
+      border: 1px solid #666;
+      box-shadow: 1px 1px 3px #000;
+      position: relative;
+    }
+    .capacitor::after {
+      content: '';
+      position: absolute;
+      top: 3px; left: 3px; right: 3px; bottom: 3px;
+      border-radius: 50%;
+      border: 1px solid #333;
+    }
+
+    /* CPU Through-Hole Graph Chart Canvas */
+    #cpu-graph-canvas {
+      background: #000;
+      border: 1px solid #444;
+      border-radius: 2px;
+      box-shadow: inset 0 0 5px #000;
+    }
+
+    /* RAM LED Indicator Meter Surface Patch */
+    .ram-led-meter {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      background: #000;
+      padding: 6px;
+      border-radius: 4px;
+      border: 1px solid #333;
+    }
+    .ram-led {
+      width: 12px;
+      height: 18px;
+      background: #1a241b;
+      border: 1px solid #283a2a;
+      border-radius: 2px;
+      box-shadow: inset 0 0 3px #000;
+      transition: all 0.15s ease;
+    }
+    .ram-led.active-green {
+      background: #61f205;
+      box-shadow: 0 0 8px #61f205, inset 0 0 2px #fff;
+    }
+    .ram-led.active-amber {
+      background: #f8a100;
+      box-shadow: 0 0 8px #f8a100, inset 0 0 2px #fff;
+    }
+    .ram-led.active-red {
+      background: #ff2222;
+      box-shadow: 0 0 8px #ff2222, inset 0 0 2px #fff;
+    }
+
+    /* COMM Radio Network Activity LEDs */
+    .comm-led-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .comm-led-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 8px;
+      color: #888;
+    }
+    .comm-led {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #1b201c;
+      border: 1px solid #333;
+    }
+    .comm-led.rx.active {
+      background: #00e1ff;
+      box-shadow: 0 0 8px #00e1ff, inset 0 0 2px #fff;
+    }
+    .comm-led.tx.active {
+      background: #ff9900;
+      box-shadow: 0 0 8px #ff9900, inset 0 0 2px #fff;
+    }
+
+    /* SMA Coax Connector Visual */
+    .sma-connector {
+      width: 10px;
+      height: 14px;
+      background: linear-gradient(180deg, #d4af37, #8a7122);
+      border: 1px solid #5c4a14;
+      border-radius: 2px;
+      box-shadow: 1px 1px 3px #000;
     }
 
     .status-hud {
       margin-top: auto;
-      background: #000;
-      border: 1px solid var(--amber-dim);
-      padding: 8px;
+      background: #080908;
+      border: 1px solid #333;
+      padding: 8px 10px;
       border-radius: 4px;
-      font-size: 12px;
+      font-size: 11px;
     }
 
+    /* Realistic 3D Tactile Buttons Panel */
     .controls-panel {
       grid-column: 1 / 2;
       grid-row: 2 / 3;
-      background: #1a1c1b;
-      border: 3px solid #111;
+      background: linear-gradient(180deg, #222423 0%, #161716 100%);
+      border: 3px solid #0d0e0d;
       border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: space-around;
-      padding: 0 20px;
+      padding: 0 16px;
+      box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+      position: relative;
     }
 
     .btn-physical {
-      background: linear-gradient(145deg, #3d403e, #272827);
+      position: relative;
+      background: linear-gradient(145deg, #444745, #222423);
       border: 2px solid #111;
-      color: #ccc;
-      padding: 12px 24px;
+      color: #ddd;
+      padding: 12px 16px;
       font-weight: bold;
       font-family: inherit;
-      font-size: 12px;
+      font-size: 10px;
       letter-spacing: 1px;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
-      box-shadow: 0 5px 0 #0f100f, 0 8px 6px rgba(0,0,0,0.6);
-      transition: all 0.05s ease;
+      box-shadow: 
+        0 6px 0 #0d0e0d, 
+        0 10px 10px rgba(0,0,0,0.7),
+        inset 0 1px 1px rgba(255,255,255,0.2);
+      transition: all 0.06s ease;
+      text-shadow: 0 -1px 1px #000;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .btn-physical:active, .btn-physical.pressed {
-      transform: translateY(4px);
-      box-shadow: 0 1px 0 #0f100f, 0 2px 4px rgba(0,0,0,0.6);
+      transform: translateY(5px);
+      box-shadow: 
+        0 1px 0 #0d0e0d, 
+        0 3px 5px rgba(0,0,0,0.7),
+        inset 0 1px 1px rgba(0,0,0,0.5);
     }
 
-    .btn-confirm { border-top: 2px solid #58965c; }
-    .btn-cancel  { border-top: 2px solid #a84b4b; }
-    .btn-nav     { border-top: 2px solid #a8944b; }
+    .btn-confirm { border-top: 3px solid #58965c; }
+    .btn-cancel  { border-top: 3px solid #a84b4b; }
+    .btn-nav     { border-top: 3px solid #a8944b; }
+    
+    /* Hardware Mechanical Fullscreen Switch Styling */
+    .btn-fullscreen-hw { 
+      border-top: 3px solid #00e1ff; 
+      color: #e0f8ff;
+      background: linear-gradient(145deg, #2d3b45, #17222a);
+    }
+    .btn-fullscreen-hw .btn-led {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #003344;
+      border: 1px solid #00e1ff;
+      box-shadow: inset 0 0 3px #000;
+      transition: all 0.2s ease;
+    }
+    .btn-fullscreen-hw.active-fs .btn-led {
+      background: #00e1ff;
+      box-shadow: 0 0 8px #00e1ff, inset 0 0 2px #fff;
+    }
 
     .menu-item {
       padding: 4px 8px;
@@ -243,7 +506,7 @@
 
     .bar-container {
       width: 100%;
-      background: #222;
+      background: #111;
       height: 12px;
       border: 1px solid var(--amber-dim);
       margin-top: 4px;
@@ -276,27 +539,21 @@
       border-style: solid;
       box-shadow: 0 0 12px var(--amber-glow);
     }
-
-    .fs-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      font-size: 10px;
-      background: #333;
-      color: #aaa;
-      border: 1px solid #555;
-      padding: 3px 6px;
-      cursor: pointer;
-      z-index: 20;
-    }
   </style>
 </head>
 <body>
 
 <div id="app-container">
-  <canvas id="texture-canvas"></canvas>
-  <button class="fs-btn" onclick="toggleFullscreen()">[1920x1080 / FULLSCREEN]</button>
+  <!-- Corner Screws -->
+  <div class="screw-head screw-tl"></div>
+  <div class="screw-head screw-tr"></div>
+  <div class="screw-head screw-bl"></div>
+  <div class="screw-head screw-br"></div>
 
+  <!-- Dynamic Rust & Dirt Canvas Overlay -->
+  <canvas id="texture-canvas"></canvas>
+
+  <!-- CRT Monitor Box -->
   <div class="crt-container">
     <div class="crt-header">
       <span id="crt-node-id">SYSTEM STATUS: ONLINE [NODE-07]</span>
@@ -306,41 +563,95 @@
     <div id="crt-screen" class="crt-screen-content"></div>
   </div>
 
+  <!-- Right Hardware Chassis Column -->
   <div class="hw-panel">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <span style="color:#aaa; font-size:11px; font-weight:bold;">APOC-TECH HARDWARE</span>
+    <div class="panel-header-strip">
+      <span style="color:#aaa; font-size:10px; font-weight:bold;">APOC-TECH MODULAR SLEDS</span>
       <span class="hw-warning-tag">HIGH VOLTAGE</span>
     </div>
 
+    <!-- CPU Module Sled -->
     <div class="hw-card">
-      <div class="hw-card-title">PROCESSOR CHIP [SURFACE PATCHED]</div>
+      <div class="hw-card-title">
+        <span>PROCESSOR SLED</span>
+        <span style="color:#666;">[SLOT 01]</span>
+      </div>
       <div id="hw-cpu-name" class="hw-card-value">P-78 Single-Core @ 1.2 GHz</div>
       <div class="pcb-visual">
-        <div class="pcb-chip"></div>
-        <div class="pcb-chip" style="width:15px;"></div>
-        <span style="font-size:9px; color:#4a8256; font-family:monospace;">CPU_BUS_OK</span>
+        <div class="clamp-bracket clamp-left"><span class="clamp-label">P-78</span></div>
+        <div class="pcb-chip" style="font-size:8px; font-weight:bold;">P-78</div>
+        
+        <!-- Through-hole scrolling activity display chart -->
+        <canvas id="cpu-graph-canvas" width="110" height="32"></canvas>
+        
+        <div class="resistor">
+          <div class="res-band band-red"></div>
+          <div class="res-band band-black"></div>
+          <div class="res-band band-gold"></div>
+        </div>
+        <div class="clamp-bracket clamp-right"><span class="clamp-label">P-78</span></div>
       </div>
     </div>
 
+    <!-- RAM Module Sled -->
     <div class="hw-card">
-      <div class="hw-card-title">RAM DISK MODULE [VOLATILE]</div>
+      <div class="hw-card-title">
+        <span>RAM DISK MODULE</span>
+        <span style="color:#666;">[SLOT 02]</span>
+      </div>
       <div id="hw-ram-name" class="hw-card-value">1.0 GB RAM DISK (0/1000 MB)</div>
       <div class="pcb-visual">
-        <div class="pcb-chip" style="height:12px; width:100%;"></div>
+        <div class="clamp-bracket clamp-left"><span class="clamp-label">RAM-IX</span></div>
+        <div class="capacitor"></div>
+        
+        <!-- Surface Mounted RAM Disk LEDs -->
+        <div class="ram-led-meter" id="ram-led-container">
+          <div class="ram-led"></div><div class="ram-led"></div>
+          <div class="ram-led"></div><div class="ram-led"></div>
+          <div class="ram-led"></div><div class="ram-led"></div>
+          <div class="ram-led"></div><div class="ram-led"></div>
+          <div class="ram-led"></div><div class="ram-led"></div>
+        </div>
+
+        <div class="resistor">
+          <div class="res-band band-blue"></div>
+          <div class="res-band band-gold"></div>
+          <div class="res-band band-black"></div>
+        </div>
+        <div class="clamp-bracket clamp-right"><span class="clamp-label">RAM-IX</span></div>
       </div>
     </div>
 
+    <!-- COMM Module Sled -->
     <div class="hw-card">
-      <div class="hw-card-title">COMM MODULE [RADIO HARDWARE]</div>
+      <div class="hw-card-title">
+        <span>COMM TRANSCEIVER</span>
+        <span style="color:#666;">[SLOT 03]</span>
+      </div>
       <div id="hw-comm-name" class="hw-card-value">COMM-01 Radio Link</div>
       <div class="pcb-visual">
-        <div class="pcb-chip" style="border-radius:50%; width:20px; height:20px;"></div>
-        <span style="font-size:9px; color:#4a8256; font-family:monospace;">ANT_GAI: +3dB</span>
+        <div class="clamp-bracket clamp-left"><span class="clamp-label">COMM-03</span></div>
+        <div class="sma-connector"></div>
+        <div class="pcb-chip" style="width:28px; min-width:28px;">RF</div>
+        
+        <!-- Network Activity Indicator LEDs -->
+        <div class="comm-led-group">
+          <div class="comm-led-row"><div class="comm-led rx" id="led-rx"></div> RX</div>
+          <div class="comm-led-row"><div class="comm-led tx" id="led-tx"></div> TX</div>
+        </div>
+
+        <div class="capacitor"></div>
+        <div class="sma-connector"></div>
+        <div class="clamp-bracket clamp-right"><span class="clamp-label">COMM-03</span></div>
       </div>
     </div>
 
+    <!-- Status HUD Container -->
     <div class="status-hud">
-      <div style="color:#fff; font-weight:bold; font-size:11px; margin-bottom:4px;">OUTPOST SHELTER STATUS</div>
+      <div style="color:#fff; font-weight:bold; font-size:11px; margin-bottom:4px; display:flex; justify-content:space-between;">
+        <span>OUTPOST SHELTER STATUS</span>
+        <span style="color:#666;">NODE-07</span>
+      </div>
       <div>POPULATION: <span id="hud-pop" style="color:var(--amber);">0</span></div>
       <div>RATIONS STORED: <span id="hud-rations" style="color:var(--amber);">0</span> units</div>
       <div>POCKET CREDITS: <span id="hud-scrap" style="color:var(--amber);">0</span></div>
@@ -348,19 +659,24 @@
     </div>
   </div>
 
+  <!-- Physical Tactile Controls -->
   <div class="controls-panel">
     <button class="btn-physical btn-confirm" onclick="triggerAction('CONFIRM')">ACCEPT / CONFIRM</button>
     <button class="btn-physical btn-cancel" onclick="triggerAction('CANCEL')">CANCEL / BACK</button>
     <button class="btn-physical btn-nav" onclick="triggerAction('PREV')">PREV [▲]</button>
     <button class="btn-physical btn-nav" onclick="triggerAction('NEXT')">NEXT [▼]</button>
+    <!-- Mechanical Hardware Fullscreen Toggle Button -->
+    <button class="btn-physical btn-fullscreen-hw" id="fs-hw-btn" onclick="toggleFullscreen()">
+      <div class="btn-led"></div>
+      <span id="fs-btn-text">FULLSCREEN [OFF]</span>
+    </button>
   </div>
 </div>
 
 <script>
   const STORAGE_KEY = 'RECLAIMER_IX_SAVE_STATE';
-  const MAX_TERMINAL_DISPLAY_JOBS = 7; // Max total terminal job list entries
+  const MAX_TERMINAL_DISPLAY_JOBS = 7;
 
-  // --- INFINITE HARDWARE SPECIFICATION FORMULAS ---
   function getCpuSpec(level) {
     const freq = (1.2 + (level - 1) * 1.2).toFixed(1);
     const coreTitle = level === 1 ? 'Single-Core' : level === 2 ? 'Dual-Core' : level === 3 ? 'Quad-Core' : `Multi-Core v${level}`;
@@ -387,7 +703,6 @@
     return { level, name, price, difficultyTier };
   }
 
-  // Calculate RAM size requirement based on Job Difficulty Tier
   function getJobRamSize(reqCommLevel) {
     return Math.floor(600 * Math.pow(1.5, reqCommLevel - 1));
   }
@@ -404,12 +719,16 @@
     lastTick: Date.now()
   };
 
-  let currentView = 'MAIN_MENU'; // MAIN_MENU, SHOP, JOBS, BANK, SYSTEM, HACK_MINIGAME, IMPORT_SCREEN, CONFIRM_RESET
+  let currentView = 'MAIN_MENU';
   let selectedIndex = 0;
   let activeHackJob = null;
   let hackGameData = null;
   let terminalNotification = null;
 
+  // CPU Display Through-Hole Activity Chart Data
+  const cpuHistory = new Array(22).fill(10);
+
+  // Load Time Texture Generator for Procedural Rust & Ambient Occlusion Shading
   function generateProceduralTexture() {
     const canvas = document.getElementById('texture-canvas');
     const container = document.getElementById('app-container');
@@ -420,23 +739,112 @@
     const imgData = ctx.createImageData(canvas.width, canvas.height);
     const data = imgData.data;
 
-    for (let i = 0; i < data.length; i += 4) {
-      const noise = Math.random() * 255;
-      const isRust = Math.random() > 0.96;
+    for (let y = 0; y < canvas.height; y++) {
+      for (let x = 0; x < canvas.width; x++) {
+        const i = (y * canvas.width + x) * 4;
+        const noise = Math.random() * 255;
+        
+        // Corner and Edge Vignette/Ambient Occlusion Shadow Calculation
+        const distX = Math.min(x, canvas.width - x) / canvas.width;
+        const distY = Math.min(y, canvas.height - y) / canvas.height;
+        const edgeDist = Math.min(distX, distY);
+        const shadow = edgeDist < 0.05 ? (1 - edgeDist / 0.05) * 120 : 0;
 
-      if (isRust) {
-        data[i]     = 160 + Math.random() * 60;
-        data[i + 1] = 60 + Math.random() * 40;
-        data[i + 2] = 20;
-        data[i + 3] = 180;
-      } else {
-        data[i]     = noise;
-        data[i + 1] = noise;
-        data[i + 2] = noise;
-        data[i + 3] = Math.random() * 35;
+        // Rust spot clusters
+        const rustNoise = Math.sin(x * 0.015) * Math.cos(y * 0.015) + Math.random() * 0.3;
+        const isRust = rustNoise > 0.82;
+
+        if (isRust) {
+          data[i]     = 150 + Math.random() * 70;
+          data[i + 1] = 50 + Math.random() * 30;
+          data[i + 2] = 15;
+          data[i + 3] = 160;
+        } else {
+          data[i]     = noise;
+          data[i + 1] = noise;
+          data[i + 2] = noise;
+          data[i + 3] = Math.min(255, Math.random() * 28 + shadow);
+        }
       }
     }
     ctx.putImageData(imgData, 0, 0);
+  }
+
+  // Draw CPU Activity Chart on Surface Mounted Through-Hole Canvas Display
+  function drawCpuGraph() {
+    const canvas = document.getElementById('cpu-graph-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+
+    // Simulate CPU load noise based on activity
+    const activityBase = currentView === 'HACK_MINIGAME' ? 75 : 25;
+    const val = Math.min(100, Math.max(5, activityBase + (Math.random() * 30 - 15)));
+    cpuHistory.push(val);
+    if (cpuHistory.length > 22) cpuHistory.shift();
+
+    ctx.fillStyle = '#050c05';
+    ctx.fillRect(0, 0, w, h);
+
+    // Draw Grid
+    ctx.strokeStyle = '#112b15';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < w; x += 10) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+    }
+    for (let y = 0; y < h; y += 8) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+    }
+
+    // Draw Through-hole LED activity bar graph
+    const barWidth = 4;
+    for (let i = 0; i < cpuHistory.length; i++) {
+      const bh = (cpuHistory[i] / 100) * (h - 4);
+      const x = i * (barWidth + 1) + 2;
+      const y = h - bh - 2;
+
+      ctx.fillStyle = cpuHistory[i] > 80 ? '#ff3333' : '#61f205';
+      ctx.fillRect(x, y, barWidth, bh);
+    }
+  }
+
+  // Flash Comm LEDs during activity
+  function pulseNetworkLeds() {
+    const rx = document.getElementById('led-rx');
+    const tx = document.getElementById('led-tx');
+    if (!rx || !tx) return;
+
+    if (Math.random() < 0.45) {
+      rx.classList.add('active');
+      setTimeout(() => rx.classList.remove('active'), 120 + Math.random() * 150);
+    }
+    if (Math.random() < 0.35) {
+      tx.classList.add('active');
+      setTimeout(() => tx.classList.remove('active'), 100 + Math.random() * 200);
+    }
+  }
+
+  // Update RAM LED surface patch meter
+  function updateRamLeds() {
+    const ramSpec = getRamSpec(gameState.hardware.ramLevel);
+    const usedRam = getTotalUsedRam();
+    const pct = Math.min(1.0, usedRam / ramSpec.capacityMB);
+    
+    const container = document.getElementById('ram-led-container');
+    if (!container) return;
+
+    const leds = container.querySelectorAll('.ram-led');
+    const litCount = Math.ceil(pct * leds.length);
+
+    leds.forEach((led, idx) => {
+      led.className = 'ram-led';
+      if (idx < litCount) {
+        if (pct > 0.85) led.classList.add('active-red');
+        else if (pct > 0.6) led.classList.add('active-amber');
+        else led.classList.add('active-green');
+      }
+    });
   }
 
   function saveGame() {
@@ -521,13 +929,11 @@
     location.reload();
   }
 
-  // Generates dynamic jobs based on Hardware Levels and RAM Clamps
   function generateAvailableJobs() {
     const commSpec = getCommSpec(gameState.hardware.commLevel);
     const maxCommTier = commSpec.difficultyTier;
     
     const acceptedCount = gameState.acceptedJobs.length;
-    // Clamped count so total list entries (accepted + available) fits on terminal UI
     const targetAvailable = Math.max(2, Math.min(5, MAX_TERMINAL_DISPLAY_JOBS - acceptedCount));
     
     gameState.availableJobs = [];
@@ -570,10 +976,8 @@
     }
   }
 
-  // Game Loop handles pause/resume state switching
   function startSimulationLoop() {
     setInterval(() => {
-      // Pause simulation when in System Menu or explicit paused state
       if (gameState.isPaused || currentView === 'SYSTEM' || currentView === 'IMPORT_SCREEN' || currentView === 'CONFIRM_RESET') {
         return;
       }
@@ -594,10 +998,17 @@
         }
       }
 
+      pulseNetworkLeds();
       saveGame();
       updateHUD();
       if (currentView === 'MAIN_MENU' || currentView === 'SYSTEM') render();
     }, 4000);
+
+    // Hardware graphics update tick (200ms)
+    setInterval(() => {
+      drawCpuGraph();
+      if (Math.random() < 0.2) pulseNetworkLeds();
+    }, 200);
   }
 
   function startHackingJob(job) {
@@ -629,6 +1040,7 @@
 
     hackGameData.interval = setInterval(() => {
       hackGameData.timer -= 0.1;
+      pulseNetworkLeds();
       if (hackGameData.timer <= 0) {
         clearInterval(hackGameData.interval);
         failHack("CONNECTION TIMED OUT");
@@ -684,7 +1096,6 @@
     currentView = newView;
     selectedIndex = 0;
 
-    // View-dependent state management: Pause on System Menu, Resume on Main Menu
     if (newView === 'SYSTEM' || newView === 'IMPORT_SCREEN' || newView === 'CONFIRM_RESET') {
       gameState.isPaused = true;
     } else if (newView === 'MAIN_MENU') {
@@ -695,6 +1106,8 @@
   }
 
   function triggerAction(action) {
+    pulseNetworkLeds();
+
     const btnMap = { CONFIRM: '.btn-confirm', CANCEL: '.btn-cancel', PREV: '.btn-nav:nth-of-type(3)', NEXT: '.btn-nav:nth-of-type(4)' };
     const el = document.querySelector(btnMap[action]);
     if (el) {
@@ -894,6 +1307,9 @@
     document.getElementById('hw-cpu-name').innerText = cpu.name;
     document.getElementById('hw-ram-name').innerText = `${ram.name} (${usedRam}/${ram.capacityMB} MB)`;
     document.getElementById('hw-comm-name').innerText = comm.name;
+
+    updateRamLeds();
+    updateFullscreenHardwareState();
   }
 
   function render() {
@@ -1080,13 +1496,42 @@
     if (e.key === 'Escape' || e.key === 'Backspace') triggerAction('CANCEL');
   });
 
-  function toggleFullscreen() {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
+  function updateFullscreenHardwareState() {
+    const btn = document.getElementById('fs-hw-btn');
+    const txt = document.getElementById('fs-btn-text');
+    if (!btn || !txt) return;
+
+    if (document.fullscreenElement) {
+      btn.classList.add('active-fs');
+      txt.innerText = 'FULLSCREEN [ON]';
     } else {
-      document.exitFullscreen().catch(() => {});
+      btn.classList.remove('active-fs');
+      txt.innerText = 'FULLSCREEN [OFF]';
     }
   }
+
+  function toggleFullscreen() {
+    const btn = document.getElementById('fs-hw-btn');
+    if (btn) {
+      btn.classList.add('pressed');
+      setTimeout(() => btn.classList.remove('pressed'), 120);
+    }
+
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => {
+        updateFullscreenHardwareState();
+      }).catch(() => {});
+    } else {
+      document.exitFullscreen().then(() => {
+        updateFullscreenHardwareState();
+      }).catch(() => {});
+    }
+  }
+
+  document.addEventListener('fullscreenchange', () => {
+    updateFullscreenHardwareState();
+    generateProceduralTexture();
+  });
 
   window.onload = () => {
     generateProceduralTexture();
