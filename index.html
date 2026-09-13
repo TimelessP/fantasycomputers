@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Fantasy Computers: three playable mechanical computer interfaces built for the browser.">
+  <title>Fantasy Computers // Machine Bay</title>
+  <style>
+    :root {
+      --ink: #e9edf2;
+      --muted: #8d98a5;
+      --line: #303943;
+      --panel: rgba(19, 24, 29, 0.88);
+      --bg: #080b0e;
+      --amber: #e9ad3a;
+      --amber-soft: #7e5c24;
+      --red: #ed5b4f;
+      --cyan: #49c5d6;
+      --green: #75d27b;
+      --font-display: "Trebuchet MS", "Segoe UI", sans-serif;
+      --font-mono: "DejaVu Sans Mono", "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { min-height: 100%; }
+
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        radial-gradient(circle at 50% -10%, #26313a 0, var(--bg) 54%);
+      background-size: 100% 5px, 100% 100%;
+      font-family: var(--font-mono);
+    }
+
+    a { color: inherit; }
+
+    .page-shell {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 42px 0 34px;
+    }
+
+    .topline {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: center;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .status { color: var(--green); }
+    .status::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); }
+
+    .hero { padding: 76px 0 54px; max-width: 850px; }
+
+    h1, h2, p { margin: 0; }
+
+    h1 {
+      max-width: 800px;
+      font-family: var(--font-display);
+      font-size: clamp(42px, 8vw, 88px);
+      line-height: .92;
+      letter-spacing: -2px;
+      text-transform: uppercase;
+    }
+
+    h1 span { color: var(--amber); }
+
+    .hero-copy {
+      max-width: 620px;
+      margin-top: 26px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .section-label::after { content: ""; height: 1px; flex: 1; background: var(--line); }
+
+    .machine-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .machine-card {
+      display: flex;
+      min-height: 390px;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      padding: 24px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 18px 45px rgba(0,0,0,.25);
+      text-decoration: none;
+      transition: transform .2s ease, border-color .2s ease, background .2s ease;
+    }
+
+    .machine-card::before { content: ""; position: absolute; inset: 0 0 auto; height: 4px; background: var(--card-accent); }
+    .machine-card:hover, .machine-card:focus-visible { transform: translateY(-5px); border-color: var(--card-accent); background: #202830; outline: none; }
+    .machine-card:focus-visible { box-shadow: 0 0 0 2px var(--card-accent), 0 18px 45px rgba(0,0,0,.35); }
+
+    .card-meta { display: flex; justify-content: space-between; color: var(--card-accent); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; }
+    .machine-card h2 { margin-top: 52px; color: var(--ink); font-family: var(--font-display); font-size: 31px; letter-spacing: 1px; }
+    .machine-card p { margin-top: 12px; color: var(--muted); font-size: 12px; line-height: 1.7; }
+
+    .specs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: auto; padding-top: 28px; }
+    .spec { padding-top: 9px; border-top: 1px solid var(--line); }
+    .spec strong { display: block; color: var(--ink); font-size: 12px; }
+    .spec small { color: var(--muted); font-size: 10px; }
+
+    .launch { margin-top: 24px; color: var(--card-accent); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
+    .launch::after { content: "  ->"; }
+
+    .card-reclaimer { --card-accent: var(--amber); }
+    .card-retro8 { --card-accent: var(--red); }
+    .card-retro32 { --card-accent: var(--cyan); }
+
+    footer { display: flex; justify-content: space-between; gap: 18px; margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; line-height: 1.6; }
+    footer a { color: var(--amber); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 800px) {
+      .page-shell { width: min(100% - 28px, 600px); padding-top: 24px; }
+      .hero { padding: 58px 0 40px; }
+      .machine-grid { grid-template-columns: 1fr; }
+      .machine-card { min-height: 300px; }
+      .machine-card h2 { margin-top: 34px; }
+      footer { flex-direction: column; margin-top: 42px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) { .machine-card { transition: none; } .machine-card:hover { transform: none; } }
+  </style>
+</head>
+<body>
+  <main class="page-shell">
+    <div class="topline">
+      <span>Fantasy Computers // Machine Bay</span>
+      <span class="status">All systems local</span>
+    </div>
+
+    <header class="hero">
+      <h1>Choose your <span>machine.</span></h1>
+      <p class="hero-copy">Three self-contained fantasy computers, each with its own controls, rules and personality. Open a console, power it up, and see what it can do.</p>
+    </header>
+
+    <section aria-labelledby="machines-heading">
+      <div class="section-label" id="machines-heading">Available systems</div>
+      <div class="machine-grid">
+        <a class="machine-card card-reclaimer" href="reclaimer.html">
+          <div class="card-meta"><span>Node 07</span><span>Survival terminal</span></div>
+          <h2>Reclaimer-IX</h2>
+          <p>Run an outpost from a battered amber terminal. Upgrade the hardware, manage rations, accept network jobs and decrypt broadcasts to keep the survivors alive.</p>
+          <div class="specs"><div class="spec"><strong>Amber CRT</strong><small>Reactive interface</small></div><div class="spec"><strong>Camp systems</strong><small>Persistent state</small></div></div>
+          <div class="launch">Open terminal</div>
+        </a>
+
+        <a class="machine-card card-retro8" href="retro8.html">
+          <div class="card-meta"><span>8-bit</span><span>Front panel CPU</span></div>
+          <h2>Retro-8</h2>
+          <p>Operate a tiny fantasy processor by hand. Flip address and data switches, deposit instructions into RAM, then step through programs under glowing LEDs.</p>
+          <div class="specs"><div class="spec"><strong>16 bytes</strong><small>Addressable RAM</small></div><div class="spec"><strong>Manual ISA</strong><small>Direct execution</small></div></div>
+          <div class="launch">Power on computer</div>
+        </a>
+
+        <a class="machine-card card-retro32" href="retro32.html">
+          <div class="card-meta"><span>32-bit</span><span>Cartridge ready</span></div>
+          <h2>Retro-32</h2>
+          <p>A larger mechanical computer with an assembler, cartridges, terminal I/O, a fantasy SSD and a complete 32-bit instruction set to explore.</p>
+          <div class="specs"><div class="spec"><strong>64 KB</strong><small>Byte memory</small></div><div class="spec"><strong>Assembler</strong><small>Write your own code</small></div></div>
+          <div class="launch">Enter machine bay</div>
+        </a>
+      </div>
+    </section>
+
+    <footer>
+      <span>Single-file interfaces. No dependencies. Runs locally or on GitHub Pages.</span>
+      <a href="README.md">Read the project notes</a>
+    </footer>
+  </main>
+</body>
+</html>
