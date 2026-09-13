@@ -24,6 +24,8 @@ Then visit `http://localhost:8000/`.
 
 Publish the repository from the branch and folder configured in the repository's GitHub Pages settings. GitHub Pages will serve `index.html` as the site root, and the three machine links will work as relative paths.
 
+Live site: [timelessp.github.io/fantasycomputers](https://timelessp.github.io/fantasycomputers/)
+
 ## Controls
 
 The interfaces are designed for mouse and keyboard use. Each machine includes its own in-app instructions or manual. Browser storage is used by Reclaimer-IX for its local save state; the other machines keep their current session in memory.
