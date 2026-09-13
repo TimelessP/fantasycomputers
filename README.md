@@ -2,6 +2,8 @@
 
 A small collection of standalone, browser-based fantasy computer interfaces. Each machine is a single HTML file with its own styling, controls and simulation logic. There is no build step and no runtime dependency.
 
+![Reclaimer-IX terminal screenshot](screenshots/Screenshot%20from%202026-09-13%2019-45-45.jpg)
+
 ## Machines
 
 - **[Reclaimer-IX](reclaimer.html)** - An amber CRT survival terminal where you manage an outpost, upgrade hardware, accept network jobs and decrypt broadcasts.
