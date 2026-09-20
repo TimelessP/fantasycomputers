@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>GEM/OS Monochrome Environment</title>
+  <style>
+    /* --------------------------------------------------
+       1-BIT MONOCHROME BASE STYLES & DITHER PATTERNS
+       -------------------------------------------------- */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-font-smoothing: none;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 12px;
+      font-weight: bold;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    :root {
+      --black: #000000;
+      --white: #ffffff;
+    }
+
+    body, html {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background-color: var(--white);
+      color: var(--black);
+    }
+
+    /* 1 Logical Pixel = 2x2 Physical Browser Pixels via Scale Factor 2 */
+    #os-root {
+      width: 50vw;
+      height: 50vh;
+      transform: scale(2);
+      transform-origin: top left;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    /* 50% Dither Pattern */
+    .dither-50 {
+      background-image: repeating-conic-gradient(var(--black) 0 25%, var(--white) 0 50%);
+      background-size: 2px 2px;
+    }
+
+    #desktop {
+      position: absolute;
+      top: 21px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      overflow: hidden;
+    }
+
+    /* --------------------------------------------------
+       TOP MENU BAR
+       -------------------------------------------------- */
+    #menubar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 20px;
+      background-color: var(--white);
+      border-bottom: 2px solid var(--black);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 6px;
+      z-index: 10000;
+    }
+
+    .menu-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    .menu-item {
+      padding: 1px 6px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .menu-item:hover, .menu-item.active {
+      background-color: var(--black);
+      color: var(--white);
+    }
+
+    .dropdown {
+      display: none;
+      position: absolute;
+      top: 19px;
+      left: 0;
+      background-color: var(--white);
+      color: var(--black);
+      border: 2px solid var(--black);
+      box-shadow: 2px 2px 0px var(--black);
+      min-width: 140px;
+      z-index: 10001;
+    }
+
+    .menu-item.active .dropdown {
+      display: block;
+    }
+
+    .dropdown-item {
+      padding: 4px 8px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .dropdown-item:hover {
+      background-color: var(--black);
+      color: var(--white);
+    }
+
+    .dropdown-divider {
+      border-bottom: 1px solid var(--black);
+      margin: 2px 0;
+    }
+
+    /* --------------------------------------------------
+       DESKTOP ICONS
+       -------------------------------------------------- */
+    .icon-grid {
+      display: flex;
+      flex-direction: column;
+      flex-wrap: wrap;
+      gap: 20px;
+      padding: 20px;
+      height: 100%;
+      align-content: flex-start;
+    }
+
+    .desktop-icon {
+      width: 72px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .desktop-icon .icon-art {
+      width: 32px;
+      height: 32px;
+      border: 2px solid var(--black);
+      background-color: var(--white);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .desktop-icon .icon-label {
+      padding: 1px 3px;
+      background-color: var(--white);
+      border: 1px transparent solid;
+      word-break: break-all;
+    }
+
+    .desktop-icon.selected .icon-art,
+    .desktop-icon.selected .icon-label {
+      background-color: var(--black);
+      color: var(--white);
+    }
+
+    /* --------------------------------------------------
+       WINDOW SYSTEM & DIALOGS
+       -------------------------------------------------- */
+    .window {
+      position: absolute;
+      background-color: var(--white);
+      border: 2px solid var(--black);
+      box-shadow: 3px 3px 0px var(--black);
+      display: flex;
+      flex-direction: column;
+      min-width: 200px;
+      min-height: 120px;
+    }
+
+    .title-bar {
+      height: 20px;
+      border-bottom: 2px solid var(--black);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 3px;
+      cursor: move;
+    }
+
+    .title-stripes {
+      flex-grow: 1;
+      height: 10px;
+      margin: 0 6px;
+      background-image: repeating-linear-gradient(var(--black), var(--black) 1px, var(--white) 1px, var(--white) 3px);
+    }
+
+    .window.inactive .title-stripes {
+      background-image: none;
+    }
+
+    .window-btn {
+      width: 14px;
+      height: 14px;
+      border: 1px solid var(--black);
+      background-color: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 10px;
+    }
+
+    .window-btn:hover {
+      background-color: var(--black);
+      color: var(--white);
+    }
+
+    .window-title {
+      padding: 0 4px;
+      background-color: var(--white);
+      white-space: nowrap;
+    }
+
+    .window-body {
+      flex-grow: 1;
+      padding: 8px;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Modals / OS Alerts */
+    .modal-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.4);
+      z-index: 20000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dialog-box {
+      width: 260px;
+      border: 2px solid var(--black);
+      background-color: var(--white);
+      box-shadow: 4px 4px 0px var(--black);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .dialog-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    /* --------------------------------------------------
+       APP SPECIFIC COMPONENTS
+       -------------------------------------------------- */
+
+    .calc-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      margin-top: 6px;
+    }
+
+    .calc-display {
+      border: 2px solid var(--black);
+      padding: 6px;
+      text-align: right;
+      font-size: 16px;
+      margin-bottom: 6px;
+      background-color: var(--white);
+      overflow: hidden;
+    }
+
+    .pixel-btn {
+      border: 2px solid var(--black);
+      background-color: var(--white);
+      color: var(--black);
+      padding: 4px 8px;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 1px 1px 0px var(--black);
+    }
+
+    .pixel-btn:active {
+      background-color: var(--black);
+      color: var(--white);
+      box-shadow: none;
+      transform: translate(1px, 1px);
+    }
+
+    .notepad-area {
+      width: 100%;
+      height: 100%;
+      min-height: 120px;
+      border: 2px solid var(--black);
+      padding: 6px;
+      resize: none;
+      outline: none;
+      background-color: var(--white);
+      color: var(--black);
+      font-family: monospace;
+    }
+
+    .path-bar {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+
+    .pixel-input {
+      border: 2px solid var(--black);
+      padding: 3px 6px;
+      outline: none;
+      width: 100%;
+      background-color: var(--white);
+      color: var(--black);
+    }
+
+    .file-list {
+      border: 2px solid var(--black);
+      flex-grow: 1;
+      overflow-y: auto;
+      background-color: var(--white);
+    }
+
+    .file-item {
+      padding: 4px 8px;
+      display: flex;
+      justify-content: space-between;
+      cursor: pointer;
+      border-bottom: 1px dotted var(--black);
+    }
+
+    .file-item:hover, .file-item.selected {
+      background-color: var(--black);
+      color: var(--white);
+    }
+
+    .term-body {
+      background-color: var(--white);
+      color: var(--black);
+      border: 2px solid var(--black);
+      flex-grow: 1;
+      padding: 6px;
+      font-family: monospace;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .term-output {
+      white-space: pre-wrap;
+      margin-bottom: 4px;
+    }
+
+    .term-line {
+      display: flex;
+    }
+
+    .term-input {
+      border: none;
+      outline: none;
+      flex-grow: 1;
+      background: transparent;
+      color: var(--black);
+      font-family: monospace;
+      font-weight: bold;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+
+    .status-bar {
+      border-top: 1px solid var(--black);
+      padding-top: 4px;
+      margin-top: 6px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="os-root" class="dither-50">
+  <!-- TOP MENU BAR -->
+  <div id="menubar">
+    <div class="menu-group">
+      <div class="menu-item" id="menu-gem">
+        ❖ GEM
+        <div class="dropdown">
+          <div class="dropdown-item" onclick="openAbout()">About GEM/OS...</div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-item" onclick="systemAction('clear-ram')">Purge RAM Disk</div>
+          <div class="dropdown-item" onclick="systemAction('reset-config')">Reset Config</div>
+        </div>
+      </div>
+      <div class="menu-item" id="menu-file">
+        File
+        <div class="dropdown">
+          <div class="dropdown-item" onclick="launchApp('notepad')">New Text File</div>
+          <div class="dropdown-item" onclick="launchApp('filemgr')">Open Disk Browser</div>
+        </div>
+      </div>
+      <div class="menu-item" id="menu-apps">
+        Applications
+        <div class="dropdown">
+          <div class="dropdown-item" onclick="launchApp('filemgr')">RAM Disk Explorer</div>
+          <div class="dropdown-item" onclick="launchApp('notepad')">Notepad Editor</div>
+          <div class="dropdown-item" onclick="launchApp('calc')">Calculator</div>
+          <div class="dropdown-item" onclick="launchApp('term')">Terminal Shell</div>
+        </div>
+      </div>
+    </div>
+    <div class="menu-group">
+      <span id="ram-indicator">RAM: 0 B</span>
+      <span id="clock">00:00:00</span>
+    </div>
+  </div>
+
+  <!-- DESKTOP CONTAINER -->
+  <div id="desktop" onclick="deselectIcons(event)">
+    <div class="icon-grid">
+      <div class="desktop-icon" onclick="selectIcon(this, event)" ondblclick="launchApp('filemgr')">
+        <div class="icon-art">🖴</div>
+        <div class="icon-label">RAM Disk</div>
+      </div>
+      <div class="desktop-icon" onclick="selectIcon(this, event)" ondblclick="launchApp('notepad')">
+        <div class="icon-art">🗎</div>
+        <div class="icon-label">Notepad</div>
+      </div>
+      <div class="desktop-icon" onclick="selectIcon(this, event)" ondblclick="launchApp('calc')">
+        <div class="icon-art">🗩</div>
+        <div class="icon-label">Calculator</div>
+      </div>
+      <div class="desktop-icon" onclick="selectIcon(this, event)" ondblclick="launchApp('term')">
+        <div class="icon-art">&gt;_</div>
+        <div class="icon-label">Terminal</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ==================================================================
+     1. IN-OS DIALOG & UI NOTIFICATION SYSTEM
+     ================================================================== */
+  
+  function osAlert(message, title = "System Message", onConfirm = null) {
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    overlay.innerHTML = `
+      <div class="dialog-box">
+        <div><strong>${title}</strong></div>
+        <div>${message}</div>
+        <div class="dialog-buttons">
+          <button class="pixel-btn" id="dlg-ok">OK</button>
+        </div>
+      </div>
+    `;
+    document.getElementById("os-root").appendChild(overlay);
+    document.getElementById("dlg-ok").focus();
+    document.getElementById("dlg-ok").onclick = () => {
+      overlay.remove();
+      if (onConfirm) onConfirm();
+    };
+  }
+
+  function osConfirm(message, title = "Confirmation", onYes = null) {
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    overlay.innerHTML = `
+      <div class="dialog-box">
+        <div><strong>${title}</strong></div>
+        <div>${message}</div>
+        <div class="dialog-buttons">
+          <button class="pixel-btn" id="dlg-yes">Yes</button>
+          <button class="pixel-btn" id="dlg-no">No</button>
+        </div>
+      </div>
+    `;
+    document.getElementById("os-root").appendChild(overlay);
+    document.getElementById("dlg-yes").focus();
+    document.getElementById("dlg-yes").onclick = () => { overlay.remove(); if (onYes) onYes(); };
+    document.getElementById("dlg-no").onclick = () => { overlay.remove(); };
+  }
+
+  function osPrompt(message, defaultValue = "", onSubmit = null) {
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    overlay.innerHTML = `
+      <div class="dialog-box">
+        <div>${message}</div>
+        <input type="text" id="dlg-input" class="pixel-input" value="${defaultValue}">
+        <div class="dialog-buttons">
+          <button class="pixel-btn" id="dlg-submit">OK</button>
+          <button class="pixel-btn" id="dlg-cancel">Cancel</button>
+        </div>
+      </div>
+    `;
+    document.getElementById("os-root").appendChild(overlay);
+    const input = document.getElementById("dlg-input");
+    input.focus();
+    input.select();
+
+    const submit = () => {
+      const val = input.value;
+      overlay.remove();
+      if (onSubmit) onSubmit(val);
+    };
+
+    document.getElementById("dlg-submit").onclick = submit;
+    input.onkeypress = (e) => { if (e.key === "Enter") submit(); };
+    document.getElementById("dlg-cancel").onclick = () => overlay.remove();
+  }
+
+  /* ==================================================================
+     2. IN-MEMORY UNIX VIRTUAL FILE SYSTEM
+     ================================================================== */
+  
+  let RAM_DISK = {
+    "/": {
+      type: "dir",
+      children: {
+        "bin": {
+          type: "dir",
+          children: {
+            "calc": { type: "file", content: "[Executable: Calculator]" },
+            "edit": { type: "file", content: "[Executable: Text Editor]" }
+          }
+        },
+        "home": {
+          type: "dir",
+          children: {
+            "readme.txt": { type: "file", content: "Welcome to GEM/OS Monochrome Edition!\n-----------------------------------\n- Files are stored in volatile RAM.\n- Rendered at exact 2x2 browser pixels per logical pixel." },
+            "todo.txt": { type: "file", content: "1. Build pixel perfect UI\n2. Calculate math\n3. Enjoy 1-bit aesthetics" }
+          }
+        },
+        "tmp": { type: "dir", children: {} }
+      }
+    }
+  };
+
+  let sysConfig = { windowPos: {}, theme: "monochrome-1bit" };
+
+  function loadConfig() {
+    const saved = localStorage.getItem("GEM_OS_CONFIG");
+    if (saved) { try { sysConfig = JSON.parse(saved); } catch(e){} }
+  }
+
+  function saveConfig() {
+    localStorage.setItem("GEM_OS_CONFIG", JSON.stringify(sysConfig));
+  }
+
+  function resolvePath(path) {
+    if (!path.startsWith("/")) path = "/" + path;
+    const parts = path.split("/").filter(Boolean);
+    let curr = RAM_DISK["/"];
+
+    for (let i = 0; i < parts.length; i++) {
+      if (!curr || curr.type !== "dir") return null;
+      curr = curr.children[parts[i]];
+    }
+    return curr;
+  }
+
+  function getParentDir(path) {
+    if (path === "/") return { parent: null, name: "" };
+    const parts = path.split("/").filter(Boolean);
+    const name = parts.pop();
+    const parentPath = "/" + parts.join("/");
+    return { parent: resolvePath(parentPath), name: name, parentPath: parentPath };
+  }
+
+  function saveFile(path, content) {
+    const { parent, name } = getParentDir(path);
+    if (parent && parent.type === "dir") {
+      parent.children[name] = { type: "file", content: content };
+      updateRAMIndicator();
+      return true;
+    }
+    return false;
+  }
+
+  function createDir(path) {
+    const { parent, name } = getParentDir(path);
+    if (parent && parent.type === "dir") {
+      parent.children[name] = { type: "dir", children: {} };
+      updateRAMIndicator();
+      return true;
+    }
+    return false;
+  }
+
+  function deletePath(path) {
+    const { parent, name } = getParentDir(path);
+    if (parent && parent.children[name]) {
+      delete parent.children[name];
+      updateRAMIndicator();
+      return true;
+    }
+    return false;
+  }
+
+  function updateRAMIndicator() {
+    const bytes = JSON.stringify(RAM_DISK).length;
+    document.getElementById('ram-indicator').innerText = `RAM Disk: ${bytes} B`;
+  }
+
+  /* ==================================================================
+     3. WINDOW MANAGER (Adjusted for 2x Scale Factor)
+     ================================================================== */
+  let zIndexCounter = 100;
+  let activeWindow = null;
+
+  function createWindow(id, title, contentHtml, width = 320, height = 240) {
+    if (document.getElementById(id)) {
+      focusWindow(document.getElementById(id));
+      return document.getElementById(id);
+    }
+
+    const win = document.createElement("div");
+    win.id = id;
+    win.className = "window";
+    
+    const savedPos = sysConfig.windowPos[id] || { 
+      x: 30 + (Math.random() * 30 | 0), 
+      y: 30 + (Math.random() * 30 | 0) 
+    };
+    
+    win.style.left = savedPos.x + "px";
+    win.style.top = savedPos.y + "px";
+    win.style.width = width + "px";
+    win.style.height = height + "px";
+    win.style.zIndex = ++zIndexCounter;
+
+    win.innerHTML = `
+      <div class="title-bar" onmousedown="startDrag(event, '${id}')">
+        <div class="window-btn" onclick="closeWindow('${id}')">X</div>
+        <div class="title-stripes"></div>
+        <div class="window-title">${title}</div>
+        <div class="title-stripes"></div>
+        <div class="window-btn" onclick="toggleMaximize('${id}')">□</div>
+      </div>
+      <div class="window-body">${contentHtml}</div>
+    `;
+
+    win.addEventListener('mousedown', () => focusWindow(win));
+    document.getElementById("desktop").appendChild(win);
+    focusWindow(win);
+    return win;
+  }
+
+  function focusWindow(win) {
+    document.querySelectorAll(".window").forEach(w => w.classList.add("inactive"));
+    win.classList.remove("inactive");
+    win.style.zIndex = ++zIndexCounter;
+    activeWindow = win;
+  }
+
+  function closeWindow(id) {
+    const win = document.getElementById(id);
+    if (win) {
+      sysConfig.windowPos[id] = {
+        x: parseInt(win.style.left),
+        y: parseInt(win.style.top)
+      };
+      saveConfig();
+      win.remove();
+    }
+  }
+
+  function toggleMaximize(id) {
+    const win = document.getElementById(id);
+    if (!win.dataset.maximized) {
+      win.dataset.oldStyle = win.getAttribute("style");
+      win.style.left = "0px";
+      win.style.top = "0px";
+      win.style.width = "100%";
+      win.style.height = "100%";
+      win.dataset.maximized = "true";
+    } else {
+      win.setAttribute("style", win.dataset.oldStyle);
+      delete win.dataset.maximized;
+    }
+  }
+
+  let dragWin = null, dragOffsetX = 0, dragOffsetY = 0;
+
+  function startDrag(e, id) {
+    if (e.target.classList.contains("window-btn")) return;
+    dragWin = document.getElementById(id);
+    focusWindow(dragWin);
+    // Divide by 2 to account for the scale(2) transform vector mapping
+    dragOffsetX = (e.clientX / 2) - dragWin.offsetLeft;
+    dragOffsetY = (e.clientY / 2) - dragWin.offsetTop;
+
+    document.addEventListener("mousemove", doDrag);
+    document.addEventListener("mouseup", stopDrag);
+  }
+
+  function doDrag(e) {
+    if (!dragWin) return;
+    dragWin.style.left = Math.max(0, (e.clientX / 2) - dragOffsetX) + "px";
+    dragWin.style.top = Math.max(0, (e.clientY / 2) - dragOffsetY) + "px";
+  }
+
+  function stopDrag() {
+    if (dragWin) {
+      sysConfig.windowPos[dragWin.id] = {
+        x: parseInt(dragWin.style.left),
+        y: parseInt(dragWin.style.top)
+      };
+      saveConfig();
+    }
+    dragWin = null;
+    document.removeEventListener("mousemove", doDrag);
+    document.removeEventListener("mouseup", stopDrag);
+  }
+
+  /* ==================================================================
+     4. APPLICATION MODULES
+     ================================================================== */
+
+  function launchCalc() {
+    const html = `
+      <div class="calc-display" id="calc-disp">0</div>
+      <div class="calc-grid">
+        <div class="pixel-btn" onclick="calcInput('C')">C</div>
+        <div class="pixel-btn" onclick="calcInput('CE')">CE</div>
+        <div class="pixel-btn" onclick="calcInput('/')">/</div>
+        <div class="pixel-btn" onclick="calcInput('*')">*</div>
+        <div class="pixel-btn" onclick="calcInput('7')">7</div>
+        <div class="pixel-btn" onclick="calcInput('8')">8</div>
+        <div class="pixel-btn" onclick="calcInput('9')">9</div>
+        <div class="pixel-btn" onclick="calcInput('-')">-</div>
+        <div class="pixel-btn" onclick="calcInput('4')">4</div>
+        <div class="pixel-btn" onclick="calcInput('5')">5</div>
+        <div class="pixel-btn" onclick="calcInput('6')">6</div>
+        <div class="pixel-btn" onclick="calcInput('+')">+</div>
+        <div class="pixel-btn" onclick="calcInput('1')">1</div>
+        <div class="pixel-btn" onclick="calcInput('2')">2</div>
+        <div class="pixel-btn" onclick="calcInput('3')">3</div>
+        <div class="pixel-btn" style="grid-row: span 2" onclick="calcInput('=')">=</div>
+        <div class="pixel-btn" style="grid-column: span 2" onclick="calcInput('0')">0</div>
+        <div class="pixel-btn" onclick="calcInput('.')">.</div>
+      </div>
+    `;
+    createWindow("app-calc", "Calculator", html, 220, 240);
+  }
+
+  let calcState = { expr: "", resetOnNext: false };
+
+  function calcInput(val) {
+    const disp = document.getElementById("calc-disp");
+    if (!disp) return;
+
+    if (val === "C") {
+      calcState.expr = "";
+      disp.innerText = "0";
+    } else if (val === "CE") {
+      calcState.expr = calcState.expr.slice(0, -1);
+      disp.innerText = calcState.expr || "0";
+    } else if (val === "=") {
+      try {
+        const res = eval(calcState.expr.replace(/[^0-9+\-*/.]/g, ''));
+        disp.innerText = res;
+        calcState.expr = String(res);
+        calcState.resetOnNext = true;
+      } catch(e) {
+        disp.innerText = "ERROR";
+        calcState.expr = "";
+      }
+    } else {
+      if (calcState.resetOnNext && !"+-*/".includes(val)) {
+        calcState.expr = "";
+        calcState.resetOnNext = false;
+      }
+      calcState.expr += val;
+      disp.innerText = calcState.expr;
+    }
+  }
+
+  function launchNotepad(filePath = "/home/untitled.txt") {
+    let content = "";
+    const existing = resolvePath(filePath);
+    if (existing && existing.type === "file") {
+      content = existing.content;
+    }
+
+    const html = `
+      <div class="toolbar">
+        <button class="pixel-btn" onclick="saveNotepadFile('notepad-path', 'notepad-text')">Save</button>
+        <button class="pixel-btn" onclick="document.getElementById('notepad-text').value=''">Clear</button>
+      </div>
+      <div class="path-bar">
+        <span>Path:</span>
+        <input type="text" id="notepad-path" class="pixel-input" value="${filePath}">
+      </div>
+      <textarea id="notepad-text" class="notepad-area">${content}</textarea>
+    `;
+    createWindow("app-notepad", "Notepad Editor", html, 360, 260);
+  }
+
+  function saveNotepadFile(pathId, textId) {
+    const path = document.getElementById(pathId).value.trim();
+    const content = document.getElementById(textId).value;
+    if (!path) {
+      osAlert("Specify target file path.");
+      return;
+    }
+    
+    saveFile(path, content);
+    osAlert(`File saved: ${path}`);
+    refreshFileBrowsers();
+  }
+
+  let currentExplorerPath = "/home";
+
+  function launchFileMgr(path = "/home") {
+    currentExplorerPath = path;
+    const html = `
+      <div class="path-bar">
+        <button class="pixel-btn" onclick="navigateExplorer('..')">↑ Up</button>
+        <input type="text" id="explorer-path" class="pixel-input" value="${currentExplorerPath}" onkeypress="if(event.key==='Enter') navigateExplorer(this.value)">
+      </div>
+      <div class="toolbar">
+        <button class="pixel-btn" onclick="promptNewFile()">+ File</button>
+        <button class="pixel-btn" onclick="promptNewFolder()">+ Folder</button>
+        <button class="pixel-btn" onclick="deleteSelectedExplorerItem()">Delete</button>
+      </div>
+      <div class="file-list" id="explorer-list"></div>
+      <div class="status-bar">
+        <span id="explorer-status">Items: 0</span>
+        <span>RAM DISK</span>
+      </div>
+    `;
+    createWindow("app-filemgr", "RAM Disk Explorer", html, 360, 260);
+    renderExplorerList();
+  }
+
+  let selectedExplorerItem = null;
+
+  function renderExplorerList() {
+    const listEl = document.getElementById("explorer-list");
+    const pathInput = document.getElementById("explorer-path");
+    if (!listEl) return;
+
+    pathInput.value = currentExplorerPath;
+    listEl.innerHTML = "";
+    selectedExplorerItem = null;
+
+    const dir = resolvePath(currentExplorerPath);
+    if (!dir || dir.type !== "dir") {
+      listEl.innerHTML = `<div style="padding:8px">Directory not found.</div>`;
+      return;
+    }
+
+    const items = Object.keys(dir.children);
+    document.getElementById("explorer-status").innerText = `Items: ${items.length}`;
+
+    items.forEach(name => {
+      const item = dir.children[name];
+      const row = document.createElement("div");
+      row.className = "file-item";
+      const icon = item.type === "dir" ? "📁" : "🗎";
+      row.innerHTML = `<span>${icon} ${name}</span><span>${item.type.toUpperCase()}</span>`;
+      
+      row.onclick = () => {
+        document.querySelectorAll("#explorer-list .file-item").forEach(r => r.classList.remove("selected"));
+        row.classList.add("selected");
+        selectedExplorerItem = name;
+      };
+
+      row.ondblclick = () => {
+        if (item.type === "dir") {
+          currentExplorerPath = (currentExplorerPath === "/" ? "" : currentExplorerPath) + "/" + name;
+          renderExplorerList();
+        } else {
+          launchNotepad((currentExplorerPath === "/" ? "" : currentExplorerPath) + "/" + name);
+        }
+      };
+
+      listEl.appendChild(row);
+    });
+  }
+
+  function navigateExplorer(targetPath) {
+    if (targetPath === "..") {
+      if (currentExplorerPath !== "/") {
+        const parts = currentExplorerPath.split("/").filter(Boolean);
+        parts.pop();
+        currentExplorerPath = "/" + parts.join("/");
+      }
+    } else {
+      currentExplorerPath = targetPath;
+    }
+    renderExplorerList();
+  }
+
+  function promptNewFile() {
+    osPrompt("Enter file name:", "new_file.txt", (name) => {
+      if (name) {
+        const fullPath = (currentExplorerPath === "/" ? "" : currentExplorerPath) + "/" + name;
+        saveFile(fullPath, "");
+        renderExplorerList();
+      }
+    });
+  }
+
+  function promptNewFolder() {
+    osPrompt("Enter folder name:", "new_folder", (name) => {
+      if (name) {
+        const fullPath = (currentExplorerPath === "/" ? "" : currentExplorerPath) + "/" + name;
+        createDir(fullPath);
+        renderExplorerList();
+      }
+    });
+  }
+
+  function deleteSelectedExplorerItem() {
+    if (!selectedExplorerItem) return osAlert("Select an item to delete.");
+    const fullPath = (currentExplorerPath === "/" ? "" : currentExplorerPath) + "/" + selectedExplorerItem;
+    osConfirm(`Delete ${selectedExplorerItem}?`, "Delete File", () => {
+      deletePath(fullPath);
+      renderExplorerList();
+    });
+  }
+
+  function refreshFileBrowsers() {
+    if (document.getElementById("app-filemgr")) {
+      renderExplorerList();
+    }
+  }
+
+  let termPath = "/home";
+
+  function launchTerminal() {
+    const html = `
+      <div class="term-body" id="term-body">
+        <div class="term-output" id="term-output">GEM/OS Shell v1.0
+Type 'help' for available commands.
+</div>
+        <div class="term-line">
+          <span id="term-prompt">${termPath}&gt;&nbsp;</span>
+          <input type="text" class="term-input" id="term-input" onkeydown="handleTermKey(event)">
+        </div>
+      </div>
+    `;
+    createWindow("app-term", "Terminal Shell", html, 380, 260);
+    setTimeout(() => {
+      const input = document.getElementById("term-input");
+      if (input) input.focus();
+    }, 50);
+  }
+
+  function handleTermKey(e) {
+    if (e.key === "Enter") {
+      const input = e.target;
+      const cmdLine = input.value.trim();
+      const output = document.getElementById("term-output");
+      
+      output.innerText += `${termPath}> ${cmdLine}\n`;
+      if (cmdLine) execCmd(cmdLine, output);
+
+      input.value = "";
+      document.getElementById("term-prompt").innerText = `${termPath}> `;
+      const body = document.getElementById("term-body");
+      body.scrollTop = body.scrollHeight;
+    }
+  }
+
+  function execCmd(cmdLine, outputEl) {
+    const parts = cmdLine.split(" ").filter(Boolean);
+    const cmd = parts[0].toLowerCase();
+    const arg = parts[1];
+
+    switch (cmd) {
+      case "help":
+        outputEl.innerText += "Commands: ls, cd <dir>, cat <file>, touch <file>, mkdir <dir>, rm <path>, clear, pwd\n";
+        break;
+      case "ls":
+        const dir = resolvePath(termPath);
+        if (dir && dir.type === "dir") {
+          const list = Object.keys(dir.children).map(k => dir.children[k].type === "dir" ? k + "/" : k).join("  ");
+          outputEl.innerText += (list || "(empty directory)") + "\n";
+        } else {
+          outputEl.innerText += "Error reading path.\n";
+        }
+        break;
+      case "pwd":
+        outputEl.innerText += termPath + "\n";
+        break;
+      case "cd":
+        if (!arg || arg === "~") {
+          termPath = "/home";
+        } else if (arg === "..") {
+          if (termPath !== "/") {
+            const p = termPath.split("/").filter(Boolean);
+            p.pop();
+            termPath = "/" + p.join("/");
+          }
+        } else {
+          const target = arg.startsWith("/") ? arg : (termPath === "/" ? "" : termPath) + "/" + arg;
+          const res = resolvePath(target);
+          if (res && res.type === "dir") {
+            termPath = target;
+          } else {
+            outputEl.innerText += `cd: no such directory: ${arg}\n`;
+          }
+        }
+        break;
+      case "cat":
+        if (!arg) { outputEl.innerText += "Usage: cat <file>\n"; break; }
+        const filePath = arg.startsWith("/") ? arg : (termPath === "/" ? "" : termPath) + "/" + arg;
+        const file = resolvePath(filePath);
+        if (file && file.type === "file") {
+          outputEl.innerText += file.content + "\n";
+        } else {
+          outputEl.innerText += `cat: file not found: ${arg}\n`;
+        }
+        break;
+      case "touch":
+        if (arg) {
+          saveFile((termPath === "/" ? "" : termPath) + "/" + arg, "");
+          refreshFileBrowsers();
+        }
+        break;
+      case "mkdir":
+        if (arg) {
+          createDir((termPath === "/" ? "" : termPath) + "/" + arg);
+          refreshFileBrowsers();
+        }
+        break;
+      case "rm":
+        if (arg) {
+          deletePath((termPath === "/" ? "" : termPath) + "/" + arg);
+          refreshFileBrowsers();
+        }
+        break;
+      case "clear":
+        outputEl.innerText = "";
+        break;
+      default:
+        outputEl.innerText += `Command not recognized: ${cmd}\n`;
+    }
+  }
+
+  /* ==================================================================
+     5. SYSTEM CONTROLS & INIT
+     ================================================================== */
+  
+  function launchApp(appName) {
+    closeAllMenus();
+    if (appName === 'calc') launchCalc();
+    if (appName === 'notepad') launchNotepad();
+    if (appName === 'filemgr') launchFileMgr();
+    if (appName === 'term') launchTerminal();
+  }
+
+  function openAbout() {
+    closeAllMenus();
+    const html = `
+      <div style="text-align: center; padding: 10px;">
+        <h3>❖ GEM/OS 1-BIT</h3>
+        <p style="margin: 10px 0">Monochrome Desktop (2x2 Browser Pixel Scaling)</p>
+        <div class="dither-50" style="height: 20px; border:1px solid #000; margin: 10px 0"></div>
+        <button class="pixel-btn" onclick="closeWindow('app-about')">OK</button>
+      </div>
+    `;
+    createWindow("app-about", "About GEM/OS", html, 260, 180);
+  }
+
+  function systemAction(act) {
+    closeAllMenus();
+    if (act === 'clear-ram') {
+      osConfirm("Purge all internal RAM Disk files?", "RAM Purge", () => {
+        RAM_DISK["/"] = { type: "dir", children: {} };
+        updateRAMIndicator();
+        refreshFileBrowsers();
+      });
+    } else if (act === 'reset-config') {
+      localStorage.removeItem("GEM_OS_CONFIG");
+      location.reload();
+    }
+  }
+
+  document.querySelectorAll(".menu-item").forEach(item => {
+    item.onclick = (e) => {
+      e.stopPropagation();
+      const isActive = item.classList.contains("active");
+      closeAllMenus();
+      if (!isActive) item.classList.add("active");
+    };
+  });
+
+  function closeAllMenus() {
+    document.querySelectorAll(".menu-item").forEach(i => i.classList.remove("active"));
+  }
+
+  document.addEventListener("click", () => closeAllMenus());
+
+  function selectIcon(el, e) {
+    e.stopPropagation();
+    document.querySelectorAll(".desktop-icon").forEach(i => i.classList.remove("selected"));
+    el.classList.add("selected");
+  }
+
+  function deselectIcons(e) {
+    if (e.target.id === "desktop") {
+      document.querySelectorAll(".desktop-icon").forEach(i => i.classList.remove("selected"));
+    }
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (activeWindow && activeWindow.id === "app-calc") {
+      if ("0123456789+-*/=.".includes(e.key)) {
+        calcInput(e.key);
+      } else if (e.key === "Enter") {
+        calcInput("=");
+      } else if (e.key === "Backspace") {
+        calcInput("CE");
+      } else if (e.key === "Escape") {
+        calcInput("C");
+      }
+    }
+  });
+
+  function updateClock() {
+    const now = new Date();
+    document.getElementById("clock").innerText = now.toTimeString().split(" ")[0];
+  }
+
+  window.onload = () => {
+    loadConfig();
+    updateClock();
+    setInterval(updateClock, 1000);
+    updateRAMIndicator();
+    launchFileMgr("/home");
+  };
+</script>
+</body>
+</html>
