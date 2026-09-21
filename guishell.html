@@ -45,10 +45,10 @@
       left: 0;
     }
 
-    /* 50% Dither Pattern */
+    /* 50% Pixel-Doubled Dither Pattern (2x2 logical px blocks) */
     .dither-50 {
       background-image: repeating-conic-gradient(var(--black) 0 25%, var(--white) 0 50%);
-      background-size: 2px 2px;
+      background-size: 4px 4px;
     }
 
     #desktop {
@@ -81,12 +81,16 @@
     .menu-group {
       display: flex;
       gap: 12px;
+      align-items: center;
     }
 
     .menu-item {
       padding: 1px 6px;
       cursor: pointer;
       position: relative;
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
 
     .menu-item:hover, .menu-item.active {
@@ -124,7 +128,7 @@
     }
 
     .dropdown-divider {
-      border-bottom: 1px solid var(--black);
+      border-bottom: 2px solid var(--black);
       margin: 2px 0;
     }
 
@@ -149,25 +153,32 @@
       text-align: center;
       cursor: pointer;
       padding: 4px;
+      --fg: var(--black);
+      --bg: var(--white);
     }
 
     .desktop-icon .icon-art {
-      width: 32px;
-      height: 32px;
+      width: 36px;
+      height: 36px;
       border: 2px solid var(--black);
-      background-color: var(--white);
+      background-color: var(--bg);
       margin-bottom: 4px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 14px;
     }
 
     .desktop-icon .icon-label {
       padding: 1px 3px;
-      background-color: var(--white);
-      border: 1px transparent solid;
+      background-color: var(--bg);
+      color: var(--fg);
+      border: 2px transparent solid;
       word-break: break-all;
+    }
+
+    .desktop-icon.selected {
+      --fg: var(--white);
+      --bg: var(--black);
     }
 
     .desktop-icon.selected .icon-art,
@@ -183,7 +194,7 @@
       position: absolute;
       background-color: var(--white);
       border: 2px solid var(--black);
-      box-shadow: 3px 3px 0px var(--black);
+      box-shadow: 4px 4px 0px var(--black);
       display: flex;
       flex-direction: column;
       min-width: 200px;
@@ -202,9 +213,15 @@
 
     .title-stripes {
       flex-grow: 1;
-      height: 10px;
+      height: 12px;
       margin: 0 6px;
-      background-image: repeating-linear-gradient(var(--black), var(--black) 1px, var(--white) 1px, var(--white) 3px);
+      background-image: repeating-linear-gradient(
+        to bottom,
+        var(--black) 0px,
+        var(--black) 2px,
+        var(--white) 2px,
+        var(--white) 4px
+      );
     }
 
     .window.inactive .title-stripes {
@@ -214,13 +231,14 @@
     .window-btn {
       width: 14px;
       height: 14px;
-      border: 1px solid var(--black);
+      border: 2px solid var(--black);
       background-color: var(--white);
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       font-size: 10px;
+      line-height: 1;
     }
 
     .window-btn:hover {
@@ -303,14 +321,14 @@
       padding: 4px 8px;
       text-align: center;
       cursor: pointer;
-      box-shadow: 1px 1px 0px var(--black);
+      box-shadow: 2px 2px 0px var(--black);
     }
 
     .pixel-btn:active {
       background-color: var(--black);
       color: var(--white);
       box-shadow: none;
-      transform: translate(1px, 1px);
+      transform: translate(2px, 2px);
     }
 
     .notepad-area {
@@ -351,14 +369,27 @@
     .file-item {
       padding: 4px 8px;
       display: flex;
+      align-items: center;
       justify-content: space-between;
       cursor: pointer;
-      border-bottom: 1px dotted var(--black);
+      border-bottom: 2px solid var(--black);
+      --fg: var(--black);
+      --bg: var(--white);
     }
 
     .file-item:hover, .file-item.selected {
       background-color: var(--black);
       color: var(--white);
+      --fg: var(--white);
+      --bg: var(--black);
+    }
+
+    .file-icon {
+      width: 14px;
+      height: 14px;
+      margin-right: 6px;
+      vertical-align: middle;
+      display: inline-block;
     }
 
     .term-body {
@@ -399,7 +430,7 @@
     }
 
     .status-bar {
-      border-top: 1px solid var(--black);
+      border-top: 2px solid var(--black);
       padding-top: 4px;
       margin-top: 6px;
       display: flex;
@@ -415,7 +446,11 @@
   <div id="menubar">
     <div class="menu-group">
       <div class="menu-item" id="menu-gem">
-        ❖ GEM
+        <svg viewBox="0 0 12 12" width="12" height="12" shape-rendering="crispEdges" style="display:inline-block; vertical-align:middle;">
+          <path d="M6 0 L12 6 L6 12 L0 6 Z" fill="currentColor"/>
+          <rect x="4" y="4" width="4" height="4" fill="var(--white)"/>
+        </svg>
+        <span>GEM</span>
         <div class="dropdown">
           <div class="dropdown-item" onclick="openAbout()">About GEM/OS...</div>
           <div class="dropdown-divider"></div>
@@ -449,20 +484,60 @@
   <!-- DESKTOP CONTAINER -->
   <div id="desktop" onclick="deselectIcons(event)">
     <div class="icon-grid">
+      <!-- RAM Disk Icon -->
       <div class="desktop-icon" onclick="selectIcon(this, event)" ondblclick="launchApp('filemgr')">
-        <div class="icon-art">🖴</div>
+        <div class="icon-art">
+          <svg viewBox="0 0 16 16" width="28" height="28" shape-rendering="crispEdges">
+            <rect x="1" y="1" width="14" height="14" fill="var(--bg)" stroke="var(--fg)" stroke-width="2"/>
+            <rect x="4" y="3" width="8" height="4" fill="var(--fg)"/>
+            <rect x="6" y="4" width="2" height="2" fill="var(--bg)"/>
+            <rect x="4" y="9" width="8" height="4" fill="var(--fg)"/>
+            <rect x="9" y="10" width="2" height="2" fill="var(--bg)"/>
+          </svg>
+        </div>
         <div class="icon-label">RAM Disk</div>
       </div>
+
+      <!-- Notepad Icon -->
       <div class="desktop-icon" onclick="selectIcon(this, event)" ondblclick="launchApp('notepad')">
-        <div class="icon-art">🗎</div>
+        <div class="icon-art">
+          <svg viewBox="0 0 16 16" width="28" height="28" shape-rendering="crispEdges">
+            <path d="M2 1 H10 L14 5 V15 H2 Z" fill="var(--bg)" stroke="var(--fg)" stroke-width="2"/>
+            <path d="M10 1 V5 H14" fill="none" stroke="var(--fg)" stroke-width="2"/>
+            <line x1="5" y1="7" x2="11" y2="7" stroke="var(--fg)" stroke-width="2"/>
+            <line x1="5" y1="10" x2="11" y2="10" stroke="var(--fg)" stroke-width="2"/>
+            <line x1="5" y1="13" x2="9" y2="13" stroke="var(--fg)" stroke-width="2"/>
+          </svg>
+        </div>
         <div class="icon-label">Notepad</div>
       </div>
+
+      <!-- Calculator Icon -->
       <div class="desktop-icon" onclick="selectIcon(this, event)" ondblclick="launchApp('calc')">
-        <div class="icon-art">🗩</div>
+        <div class="icon-art">
+          <svg viewBox="0 0 16 16" width="28" height="28" shape-rendering="crispEdges">
+            <rect x="2" y="1" width="12" height="14" fill="var(--bg)" stroke="var(--fg)" stroke-width="2"/>
+            <rect x="4" y="3" width="8" height="3" fill="var(--fg)"/>
+            <rect x="4" y="8" width="2" height="2" fill="var(--fg)"/>
+            <rect x="7" y="8" width="2" height="2" fill="var(--fg)"/>
+            <rect x="10" y="8" width="2" height="2" fill="var(--fg)"/>
+            <rect x="4" y="11" width="2" height="2" fill="var(--fg)"/>
+            <rect x="7" y="11" width="2" height="2" fill="var(--fg)"/>
+            <rect x="10" y="11" width="2" height="2" fill="var(--fg)"/>
+          </svg>
+        </div>
         <div class="icon-label">Calculator</div>
       </div>
+
+      <!-- Terminal Icon -->
       <div class="desktop-icon" onclick="selectIcon(this, event)" ondblclick="launchApp('term')">
-        <div class="icon-art">&gt;_</div>
+        <div class="icon-art">
+          <svg viewBox="0 0 16 16" width="28" height="28" shape-rendering="crispEdges">
+            <rect x="1" y="2" width="14" height="12" fill="var(--bg)" stroke="var(--fg)" stroke-width="2"/>
+            <path d="M4 5 L7 7 L4 9" fill="none" stroke="var(--fg)" stroke-width="2"/>
+            <line x1="8" y1="10" x2="12" y2="10" stroke="var(--fg)" stroke-width="2"/>
+          </svg>
+        </div>
         <div class="icon-label">Terminal</div>
       </div>
     </div>
@@ -869,6 +944,10 @@
 
   let selectedExplorerItem = null;
 
+  // 1-Bit SVG Icon Definitions for File Manager List
+  const folderSvg = `<svg class="file-icon" viewBox="0 0 14 14" shape-rendering="crispEdges"><path d="M1 2 H6 L8 4 H13 V12 H1 Z" fill="var(--bg)" stroke="var(--fg)" stroke-width="2"/><line x1="1" y1="5" x2="13" y2="5" stroke="var(--fg)" stroke-width="2"/></svg>`;
+  const fileSvg = `<svg class="file-icon" viewBox="0 0 14 14" shape-rendering="crispEdges"><path d="M2 1 H8 L12 5 V13 H2 Z" fill="var(--bg)" stroke="var(--fg)" stroke-width="2"/><line x1="4" y1="7" x2="10" y2="7" stroke="var(--fg)" stroke-width="2"/><line x1="4" y1="10" x2="8" y2="10" stroke="var(--fg)" stroke-width="2"/></svg>`;
+
   function renderExplorerList() {
     const listEl = document.getElementById("explorer-list");
     const pathInput = document.getElementById("explorer-path");
@@ -891,8 +970,8 @@
       const item = dir.children[name];
       const row = document.createElement("div");
       row.className = "file-item";
-      const icon = item.type === "dir" ? "📁" : "🗎";
-      row.innerHTML = `<span>${icon} ${name}</span><span>${item.type.toUpperCase()}</span>`;
+      const iconSvg = item.type === "dir" ? folderSvg : fileSvg;
+      row.innerHTML = `<div style="display:flex;align-items:center;">${iconSvg}<span>${name}</span></div><span>${item.type.toUpperCase()}</span>`;
       
       row.onclick = () => {
         document.querySelectorAll("#explorer-list .file-item").forEach(r => r.classList.remove("selected"));
@@ -1092,7 +1171,7 @@ Type 'help' for available commands.
       <div style="text-align: center; padding: 10px;">
         <h3>❖ GEM/OS 1-BIT</h3>
         <p style="margin: 10px 0">Monochrome Desktop (2x2 Browser Pixel Scaling)</p>
-        <div class="dither-50" style="height: 20px; border:1px solid #000; margin: 10px 0"></div>
+        <div class="dither-50" style="height: 20px; border:2px solid #000; margin: 10px 0"></div>
         <button class="pixel-btn" onclick="closeWindow('app-about')">OK</button>
       </div>
     `;
